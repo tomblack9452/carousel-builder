@@ -32,6 +32,7 @@ export default defineComponent({
     this.brandStore.load()
       .then(() => this.projectStore.init(this.brandStore.assetIds))
       .then(() => this.historyStore.start())
+      .then(() => this.projectStore.openSharedFromUrl())
     window.addEventListener('keydown', this.onKeydown)
   },
   watch: {

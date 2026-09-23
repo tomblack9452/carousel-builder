@@ -12,6 +12,7 @@ import { panoramaRun, syncPanoramas } from '../model/panorama'
 import { SLIDE_TYPES } from '../model/slideTypes'
 import { db } from '../persist/db'
 import { readProjectFile, writeProjectFile } from '../persist/projectFile'
+import { clearSharedFromUrl, readShared, sharedPayload, shareUrl } from '../persist/shareLink'
 import { slotFrames } from '../render'
 import { clamp, fitImage } from '../render/geometry'
 import { paletteFromImage } from '../render/palette'
@@ -149,6 +150,30 @@ export const useProjectStore = defineStore('project', {
       const name = `${projectSlug(this.doc)}.carousel.json`
       downloadBlob(await writeProjectFile(this.project, assetBlob), name)
       this.status = `Saved ${name}. Open it here any time to keep editing.`
+    },
+
+    async copyShareLink() {
+      const url = await shareUrl(this.project)
+      try {
+        await navigator.clipboard.writeText(url)
+        this.status = "Share link copied. It includes your text, layout and style, but not images."
+      } catch {
+        window.prompt('Copy this share link:', url)
+      }
+    },
+
+    /** If the page was opened from a share link, offer to load it. */
+    async openSharedFromUrl() {
+      const payload = sharedPayload()
+      if (!payload) return
+      clearSharedFromUrl()
+      if (!window.confirm('Open the shared carousel? It replaces your current slides (you can undo).')) return
+      try {
+        this.project = await readShared(payload)
+        this.status = 'Opened a shared carousel. Add your own images to the empty slots.'
+      } catch {
+        this.status = "That share link couldn't be read. It may have been cut off when it was copied."
+      }
     },
 
     async openProjectFile(file: File) {

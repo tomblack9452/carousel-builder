@@ -55,6 +55,7 @@ export default defineComponent({
     <input ref="file" type="file" accept=".json,application/json" hidden @change="onFile">
     <p class="hint">{{ saveNote }}</p>
     <button class="btn wide" @click="openImport">Import text from a spreadsheet</button>
+    <button class="btn wide" @click="projectStore.copyShareLink()">Copy share link</button>
     <ImportTextDialog ref="importDialog" />
 
     <label for="aspect">Slide size</label>
