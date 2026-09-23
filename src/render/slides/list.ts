@@ -1,7 +1,7 @@
 import type { Rect, RenderDoc, Slide } from '../../types'
 import { type Ctx, dim, drawBackground, drawHandle } from '../draw'
 import { type TypeStyle, typeStyle } from '../style'
-import { type TextLine, blockHeight, bodyLine, drawTextBlock, headingLines, setFont, wrap , placement } from '../text'
+import { type TextLine, blockHeight, bodyLine, drawTextBlock, headingLines, setFont, wrap, placement } from '../text'
 
 /** Numbered items, wrapped lines hanging under the item text. */
 function itemLines(ctx: Ctx, ts: TypeStyle, items: string[], size: number, maxWidth: number): TextLine[] {

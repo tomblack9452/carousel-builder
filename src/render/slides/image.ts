@@ -1,7 +1,7 @@
 import type { Rect, RenderDoc, Slide } from '../../types'
 import { type Ctx, drawBackground, drawHandle, shadeBehindText } from '../draw'
 import { typeStyle } from '../style'
-import { type TextLine, bodyLines, drawTextBlock, headingLines , placement } from '../text'
+import { type TextLine, bodyLines, drawTextBlock, headingLines, placement } from '../text'
 
 export function drawImage(ctx: Ctx, slide: Slide, doc: RenderDoc): Rect | null {
   const { width: W } = doc

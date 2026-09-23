@@ -1,7 +1,7 @@
 import type { Rect, RenderDoc, Slide } from '../../types'
 import { type Ctx, drawBackground, drawHandle, shadeBehindText } from '../draw'
 import { typeStyle } from '../style'
-import { drawTextBlock, headingLines , placement } from '../text'
+import { drawTextBlock, headingLines, placement } from '../text'
 
 export function drawCover(ctx: Ctx, slide: Slide, doc: RenderDoc): Rect | null {
   const { width: W, height: H } = doc

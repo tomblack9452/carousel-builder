@@ -1,7 +1,7 @@
 import type { Rect, RenderDoc, Slide } from '../../types'
 import { type Ctx, drawBackground, drawHandle, isLight } from '../draw'
 import { type TypeStyle, typeStyle } from '../style'
-import { drawTextBlock, headingLines, setFont , placement } from '../text'
+import { drawTextBlock, headingLines, setFont, placement } from '../text'
 
 /** Before on top, after underneath. */
 export function compareFrames(w: number, h: number): Rect[] {

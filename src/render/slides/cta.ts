@@ -1,7 +1,7 @@
 import type { ImageSlot, Rect, RenderDoc, Slide } from '../../types'
 import { type Ctx, drawHandle, drawSlot, fillBackground, slotImage } from '../draw'
 import { typeStyle } from '../style'
-import { type TextLine, bodyLines, drawTextBlock, headingLines , placement } from '../text'
+import { type TextLine, bodyLines, drawTextBlock, headingLines, placement } from '../text'
 
 /** The slot to blur behind a call to action: its own image, else the cover's, else the first image slide's. */
 export function backgroundSlot(slide: Slide, doc: RenderDoc): ImageSlot | undefined {
