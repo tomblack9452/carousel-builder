@@ -103,7 +103,13 @@ export default defineComponent({
         this.dragOver = true
       }
     },
-    onDragLeave() {
+    onDragLeave(event: DragEvent) {
+      // Moving onto one of the card's own children isn't leaving the card.
+      const to = event.relatedTarget
+      if (to instanceof Node && (this.$el as HTMLElement).contains(to)) return
+      this.clearDrag()
+    },
+    clearDrag() {
       this.dragOver = false
       this.dropSide = null
     },
@@ -112,7 +118,7 @@ export default defineComponent({
       if (movedId) {
         event.preventDefault()
         const target = this.index + (this.dropSide === 'after' ? 1 : 0)
-        this.onDragLeave()
+        this.clearDrag()
         if (movedId !== this.slide.id) this.projectStore.moveSlide(movedId, target)
         return
       }
@@ -190,7 +196,7 @@ export default defineComponent({
         draggable="true"
         title="Drag to reorder"
         @dragstart="onGripDragStart"
-        @dragend="onDragLeave"
+        @dragend="clearDrag"
       >
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01" /></svg>
         Slide {{ index + 1 }} of {{ total }}
