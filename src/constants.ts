@@ -1,6 +1,11 @@
-/** Export size in pixels (Instagram 4:5 portrait). */
-export const W = 1080
-export const H = 1350
+export type AspectId = '4:5' | '1:1' | '3:4'
+
+/** Export sizes Instagram accepts for carousel posts. */
+export const ASPECTS: Record<AspectId, { label: string; width: number; height: number }> = {
+  '4:5': { label: 'Portrait 4:5', width: 1080, height: 1350 },
+  '3:4': { label: 'Tall 3:4 (profile grid)', width: 1080, height: 1440 },
+  '1:1': { label: 'Square 1:1', width: 1080, height: 1080 },
+}
 
 export const TITLE_FONT = 'Anton, Impact, "Arial Narrow", sans-serif'
 export const SUB_FONT = '"Barlow Condensed", "Arial Narrow", sans-serif'

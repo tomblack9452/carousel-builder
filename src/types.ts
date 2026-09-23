@@ -1,3 +1,5 @@
+import type { AspectId } from './constants'
+
 export type SlideType = 'cover' | 'image' | 'text' | 'quote' | 'list' | 'compare' | 'cta'
 
 export interface ImageSlot {
@@ -22,6 +24,7 @@ export interface Slide {
 }
 
 export interface Project {
+  aspect: AspectId
   handle: string
   /** Title shadow colour. */
   accent: string

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { H, MAX_SLIDES, W } from '../constants'
+import { ASPECTS, MAX_SLIDES } from '../constants'
 import { downloadBlob, projectSlug, renderToBlob, slideFileName, zipSlides } from '../export/files'
 import { changeSlideType, cloneSlide, createSampleSlide, createSlide, starterProject } from '../model/factory'
 import { SLIDE_TYPES } from '../model/slideTypes'
@@ -18,7 +18,8 @@ export const useProjectStore = defineStore('project', {
 
   getters: {
     doc(state): RenderDoc {
-      return { project: state.project, images: useAssetStore().images, width: W, height: H }
+      const { width, height } = ASPECTS[state.project.aspect]
+      return { project: state.project, images: useAssetStore().images, width, height }
     },
     canAdd(state): boolean {
       return state.project.slides.length < MAX_SLIDES

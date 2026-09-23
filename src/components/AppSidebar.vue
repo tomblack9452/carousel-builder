@@ -1,10 +1,14 @@
 <script lang="ts">
 import { defineComponent } from 'vue'
 import { mapStores } from 'pinia'
+import { ASPECTS } from '../constants'
 import { useProjectStore } from '../stores/project'
 
 export default defineComponent({
   name: 'AppSidebar',
+  data() {
+    return { ASPECTS }
+  },
   computed: {
     ...mapStores(useProjectStore),
   },
@@ -42,8 +46,14 @@ export default defineComponent({
       </svg>Instagram Carousel Builder
     </h1>
     <p class="intro">
-      Drop an image on each slide, drag it to reposition, then download. Every slide exports as a 1080×1350 JPG.
+      Drop an image on each slide, drag it to reposition, then download. Every slide exports as a
+      {{ projectStore.doc.width }}×{{ projectStore.doc.height }} JPG.
     </p>
+
+    <label for="aspect">Slide size</label>
+    <select id="aspect" v-model="projectStore.project.aspect">
+      <option v-for="(a, id) in ASPECTS" :key="id" :value="id">{{ a.label }}</option>
+    </select>
 
     <label for="handle">Your handle</label>
     <input id="handle" v-model="projectStore.project.handle" type="text">
@@ -91,6 +101,7 @@ aside {
   margin-right: 0.22em;
 }
 .intro { color: var(--muted); margin: 0 0 10px; }
+aside select { width: 100%; }
 .stack { display: grid; gap: 10px; margin-top: 22px; }
 
 @media (max-width: 760px) {

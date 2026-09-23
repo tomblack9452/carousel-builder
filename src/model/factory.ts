@@ -54,6 +54,7 @@ export function changeSlideType(slide: Slide, type: SlideType): void {
 /** The project a first-time visitor starts with. */
 export function starterProject(): Project {
   return {
+    aspect: '4:5',
     handle: '@yourhandle',
     accent: '#ff7a3d',
     slides: [
