@@ -26,7 +26,16 @@ export default defineComponent({
 
 <template>
   <aside>
-    <h1>Instagram Carousel Builder</h1>
+    <h1 class="title">
+      <span class="title-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" role="img" aria-label="Instagram logo">
+          <rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="1.8"/>
+          <circle cx="12" cy="12" r="4.1" fill="none" stroke="currentColor" stroke-width="1.8"/>
+          <circle cx="17.2" cy="6.8" r="1.3" fill="currentColor"/>
+        </svg>
+      </span>
+      <span>Instagram Carousel Builder</span>
+    </h1>
     <p class="intro">
       Drop a screenshot on each slide, drag it to reposition, then download. Every slide exports as a 1080×1350 JPG.
     </p>
@@ -70,12 +79,29 @@ aside {
   overflow: auto;
   background: var(--panel);
 }
-h1 {
+.title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-family: Anton, Impact, sans-serif;
   font-weight: 400;
   font-size: 34px;
   line-height: 1.05;
   margin: 0 0 8px;
+}
+.title-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  color: #111827;
+  flex-shrink: 0;
+}
+.title-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 .intro { color: var(--muted); margin: 0 0 10px; }
 .stack { display: grid; gap: 10px; margin-top: 22px; }
