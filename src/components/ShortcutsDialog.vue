@@ -14,12 +14,20 @@ export default defineComponent({
     close() {
       (this.$refs.dialog as HTMLDialogElement).close()
     },
+    /** Close on backdrop clicks only: a click in the dialog's own padding also targets the dialog. */
+    onClick(event: MouseEvent) {
+      const dialog = this.$refs.dialog as HTMLDialogElement
+      if (event.target !== dialog) return
+      const r = dialog.getBoundingClientRect()
+      const inside = event.clientX >= r.left && event.clientX <= r.right && event.clientY >= r.top && event.clientY <= r.bottom
+      if (!inside) this.close()
+    },
   },
 })
 </script>
 
 <template>
-  <dialog ref="dialog" class="modal" aria-labelledby="shortcuts-title" @click.self="close">
+  <dialog ref="dialog" class="modal" aria-labelledby="shortcuts-title" @click="onClick">
     <h2 id="shortcuts-title">Keyboard shortcuts</h2>
     <section v-for="g in SHORTCUTS" :key="g.group">
       <h3>{{ g.group }}</h3>
