@@ -12,6 +12,19 @@ export interface ImageSlot {
   py: number
 }
 
+export type Align = 'left' | 'center' | 'right'
+export type Anchor = 'top' | 'middle' | 'bottom'
+
+/** Where a slide's text block sits. x/y are fractions of the slide size. */
+export interface TextLayout {
+  align: Align
+  anchor: Anchor
+  /** The block's left edge, centre or right edge, depending on `align`. */
+  x: number
+  /** The block's top, middle or bottom, depending on `anchor`. */
+  y: number
+}
+
 export interface Slide {
   id: string
   type: SlideType
@@ -21,6 +34,7 @@ export interface Slide {
   body: string
   /** At least as many as the type uses. Extra slots are kept so switching type back restores them. */
   images: ImageSlot[]
+  text: TextLayout
 }
 
 export interface Theme {

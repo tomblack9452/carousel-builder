@@ -1,5 +1,6 @@
 import type { ImageSlot, Project, Slide, SlideType, Theme } from '../types'
 import { PRESETS, presetTheme } from './presets'
+import { DEFAULT_TEXT } from './textLayout'
 import { SLIDE_TYPES } from './slideTypes'
 
 export function uid(): string {
@@ -30,6 +31,7 @@ export function createSlide(type: SlideType, content: Partial<Pick<Slide, 'title
     title: content.title ?? '',
     body: content.body ?? '',
     images: Array.from({ length: SLIDE_TYPES[type].imageSlots }, createSlot),
+    text: { ...DEFAULT_TEXT[type] },
   }
 }
 
@@ -44,10 +46,12 @@ export function cloneSlide(slide: Slide): Slide {
 
 /**
  * Switch a slide's type in place, adding image slots if the new type needs more.
+ * Text goes back to the new type's default position.
  * A slide with no text yet gets the new type's sample text.
  */
 export function changeSlideType(slide: Slide, type: SlideType): void {
   slide.type = type
+  slide.text = { ...DEFAULT_TEXT[type] }
   while (slide.images.length < SLIDE_TYPES[type].imageSlots) slide.images.push(createSlot())
   if (!slide.title.trim() && !slide.body.trim()) Object.assign(slide, SAMPLE_CONTENT[type])
 }

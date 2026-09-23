@@ -7,9 +7,16 @@ import { slotFrames } from '../render'
 import { fitImage } from '../render/geometry'
 import { useAssetStore } from '../stores/assets'
 import { useProjectStore } from '../stores/project'
-import type { ImageSlot, Slide, SlideType } from '../types'
-import IconButton from './IconButton.vue'
+import type { Align, Anchor, ImageSlot, Slide, SlideType } from '../types'
+import IconButton, { type IconName } from './IconButton.vue'
 import SlideCanvas from './SlideCanvas.vue'
+
+const ALIGNS: { value: Align; icon: IconName; label: string }[] = [
+  { value: 'left', icon: 'alignLeft', label: 'left' },
+  { value: 'center', icon: 'alignCenter', label: 'centre' },
+  { value: 'right', icon: 'alignRight', label: 'right' },
+]
+const ANCHORS: { value: Anchor }[] = [{ value: 'top' }, { value: 'middle' }, { value: 'bottom' }]
 
 export default defineComponent({
   name: 'SlideCard',
@@ -21,6 +28,8 @@ export default defineComponent({
   },
   data() {
     return {
+      ALIGNS,
+      ANCHORS,
       dragOver: false,
       /** Where a slide being dragged onto this card would land. */
       dropSide: null as 'before' | 'after' | null,
@@ -169,6 +178,26 @@ export default defineComponent({
       </template>
     </template>
 
+    <div class="row text-pos" role="group" :aria-label="`Slide ${index + 1} text position`">
+      <IconButton
+        v-for="a in ALIGNS"
+        :key="a.value"
+        :icon="a.icon"
+        :label="`Align text ${a.label}`"
+        :active="slide.text.align === a.value"
+        @click="projectStore.setTextAlign(slide.id, a.value)"
+      />
+      <span class="sep" />
+      <IconButton
+        v-for="a in ANCHORS"
+        :key="a.value"
+        :icon="a.value"
+        :label="`Move text to the ${a.value}`"
+        :active="slide.text.anchor === a.value"
+        @click="projectStore.snapText(slide.id, a.value)"
+      />
+    </div>
+
     <template v-if="takesImage">
       <input ref="file" type="file" accept="image/*" hidden @change="onFileChange">
       <div v-for="(slot, i) in slots" :key="i" class="row">
@@ -257,6 +286,8 @@ export default defineComponent({
   stroke-linecap: round;
 }
 .actions { margin-top: 10px; }
+.text-pos { gap: 4px; margin: 0 0 6px; }
+.text-pos .sep { width: 1px; align-self: stretch; margin: 4px 4px; background: var(--line); }
 .card input[type=text], .card textarea { margin-bottom: 6px; }
 .card textarea { min-height: 0; }
 

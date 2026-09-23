@@ -37,6 +37,16 @@ function normalizeSlide(raw: unknown): Slide | null {
   const slide = createSlide(raw.type as Slide['type'], { title: str(raw.title), body: str(raw.body) })
   if (Array.isArray(raw.images)) slide.images = raw.images.slice(0, 4).map(normalizeSlot)
   while (slide.images.length < SLIDE_TYPES[slide.type].imageSlots) slide.images.push(createSlot())
+  if (isObject(raw.text)) {
+    const t = raw.text
+    const d = slide.text
+    slide.text = {
+      align: t.align === 'left' || t.align === 'center' || t.align === 'right' ? t.align : d.align,
+      anchor: t.anchor === 'top' || t.anchor === 'middle' || t.anchor === 'bottom' ? t.anchor : d.anchor,
+      x: num(t.x, d.x, 0, 1),
+      y: num(t.y, d.y, 0, 1),
+    }
+  }
   return slide
 }
 

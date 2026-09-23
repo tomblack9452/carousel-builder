@@ -1,7 +1,7 @@
-import type { ImageSlot, RenderDoc, Slide } from '../../types'
+import type { ImageSlot, Rect, RenderDoc, Slide } from '../../types'
 import { type Ctx, drawHandle, drawSlot, fillBackground, slotImage } from '../draw'
 import { typeStyle } from '../style'
-import { type TextLine, bodyLines, drawTextBlock, headingLines } from '../text'
+import { type TextLine, bodyLines, drawTextBlock, headingLines , placement } from '../text'
 
 /** The slot to blur behind a call to action: its own image, else the cover's, else the first image slide's. */
 export function backgroundSlot(slide: Slide, doc: RenderDoc): ImageSlot | undefined {
@@ -12,7 +12,7 @@ export function backgroundSlot(slide: Slide, doc: RenderDoc): ImageSlot | undefi
   return from?.images[0]
 }
 
-export function drawCta(ctx: Ctx, slide: Slide, doc: RenderDoc): void {
+export function drawCta(ctx: Ctx, slide: Slide, doc: RenderDoc): Rect | null {
   const { width: W, height: H } = doc
   const ts = typeStyle(doc)
   const slot = backgroundSlot(slide, doc)
@@ -37,7 +37,8 @@ export function drawCta(ctx: Ctx, slide: Slide, doc: RenderDoc): void {
   if (body) {
     lines.push(...bodyLines(ctx, ts, body, W - 240, { start: 48, min: 30, step: 4, maxLines: 2, gapBefore: lines.length ? 24 : 0 }))
   }
-  drawTextBlock(ctx, lines, { align: 'center', anchor: 'middle', x: W / 2, y: H * 0.47 }, ts)
+  const box = drawTextBlock(ctx, lines, placement(slide, doc), ts)
 
   drawHandle(ctx, doc, 'center', W / 2, H - 90, 36, 0.9)
+  return box
 }

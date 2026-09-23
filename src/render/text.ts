@@ -1,10 +1,10 @@
-import type { Rect } from '../types'
+import type { Align, Anchor, Rect, RenderDoc, Slide } from '../types'
 import { clamp } from './geometry'
 import { type Ctx, rgba } from './draw'
 import type { Face, TypeStyle } from './style'
 
 /** Keep text blocks at least this far from the slide edges. */
-const SAFE = 60
+export const TEXT_SAFE = 60
 
 export interface Segment {
   text: string
@@ -27,15 +27,18 @@ export interface TextLine {
   indent?: number
 }
 
-export type Align = 'left' | 'center' | 'right'
-export type Anchor = 'top' | 'middle' | 'bottom'
-
 export interface Placement {
   align: Align
   anchor: Anchor
   /** Point the block is aligned to, in slide pixels. */
   x: number
   y: number
+}
+
+/** A slide's stored text layout in slide pixels. */
+export function placement(slide: Slide, doc: RenderDoc): Placement {
+  const { align, anchor, x, y } = slide.text
+  return { align, anchor, x: x * doc.width, y: y * doc.height }
 }
 
 export function setFont(ctx: Ctx, face: Face, size: number): void {
@@ -154,8 +157,8 @@ export function drawTextBlock(ctx: Ctx, lines: TextLine[], place: Placement, ts:
 
   let top = place.anchor === 'top' ? place.y : place.anchor === 'middle' ? place.y - height / 2 : place.y - height
   let left = place.align === 'left' ? place.x : place.align === 'center' ? place.x - width / 2 : place.x - width
-  top = clamp(top, SAFE, Math.max(SAFE, H - SAFE - height))
-  left = clamp(left, SAFE, Math.max(SAFE, W - SAFE - width))
+  top = clamp(top, TEXT_SAFE, Math.max(TEXT_SAFE, H - TEXT_SAFE - height))
+  left = clamp(left, TEXT_SAFE, Math.max(TEXT_SAFE, W - TEXT_SAFE - width))
 
   ctx.save()
   ctx.textAlign = 'left'

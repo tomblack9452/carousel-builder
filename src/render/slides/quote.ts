@@ -1,9 +1,9 @@
-import type { RenderDoc, Slide } from '../../types'
+import type { Rect, RenderDoc, Slide } from '../../types'
 import { type Ctx, dim, drawBackground, drawHandle } from '../draw'
 import { typeStyle } from '../style'
-import { type TextLine, bodyLines, drawTextBlock, headingLines, titleLine } from '../text'
+import { type TextLine, bodyLines, drawTextBlock, headingLines, titleLine , placement } from '../text'
 
-export function drawQuote(ctx: Ctx, slide: Slide, doc: RenderDoc): void {
+export function drawQuote(ctx: Ctx, slide: Slide, doc: RenderDoc): Rect | null {
   const { width: W, height: H } = doc
   const ts = typeStyle(doc)
   if (drawBackground(ctx, doc, slide, 0, null)) dim(ctx, doc, 0.6)
@@ -23,7 +23,8 @@ export function drawQuote(ctx: Ctx, slide: Slide, doc: RenderDoc): void {
       start: 42, min: 28, maxLines: 2, gapBefore: lines.length ? 36 : 0, alpha: 0.8,
     }))
   }
-  drawTextBlock(ctx, lines, { align: 'center', anchor: 'middle', x: W / 2, y: H / 2 }, ts)
+  const box = drawTextBlock(ctx, lines, placement(slide, doc), ts)
 
   drawHandle(ctx, doc, 'center', W / 2, H - 80, 32, 0.8)
+  return box
 }

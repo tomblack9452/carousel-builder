@@ -10,7 +10,8 @@ import { db } from '../persist/db'
 import { readProjectFile, writeProjectFile } from '../persist/projectFile'
 import { slotFrames } from '../render'
 import { clamp, fitImage } from '../render/geometry'
-import type { ImageSlot, RenderDoc, Slide, SlideType } from '../types'
+import { alignX, layoutFromBox, snapY } from '../model/textLayout'
+import type { Align, Anchor, ImageSlot, Rect, RenderDoc, Slide, SlideType } from '../types'
 import { assetBlob, useAssetStore } from './assets'
 
 const SAVE_KEY = 'project'
@@ -205,6 +206,22 @@ export const useProjectStore = defineStore('project', {
 
     updateSlot(id: string, slotIndex: number, patch: Partial<ImageSlot>) {
       Object.assign(this.slide(id).images[slotIndex], patch)
+    },
+
+    setTextAlign(id: string, align: Align) {
+      const text = this.slide(id).text
+      Object.assign(text, { align, x: alignX(align) })
+    },
+
+    snapText(id: string, anchor: Anchor) {
+      const text = this.slide(id).text
+      Object.assign(text, { anchor, y: snapY(anchor) })
+    },
+
+    /** Store the text position that draws the block at `box` (slide pixels). */
+    settleText(id: string, box: Rect) {
+      const slide = this.slide(id)
+      slide.text = layoutFromBox(slide.text, box, this.doc.width, this.doc.height)
     },
 
     /** Pan by a distance in slide pixels (e.g. from a pointer drag). */

@@ -1,6 +1,6 @@
 import { SUB_FONT } from '../constants'
 import { fontPair, stack } from '../fonts/catalog'
-import type { ImageSlot, Rect, RenderDoc, Slide } from '../types'
+import type { Anchor, ImageSlot, Rect, RenderDoc, Slide } from '../types'
 import { fitImage } from './geometry'
 
 export type Ctx = CanvasRenderingContext2D
@@ -90,6 +90,23 @@ export function shade(ctx: Ctx, doc: RenderDoc, from: number, alpha: number): vo
   g.addColorStop(1, rgba(colour, overlayAlpha(doc, alpha)))
   ctx.fillStyle = g
   ctx.fillRect(0, H * from, W, H * (1 - from))
+}
+
+/**
+ * Legibility overlay on the side the text sits: a gradient up from the bottom
+ * or down from the top, or a softer flat wash when the text is centred.
+ */
+export function shadeBehindText(ctx: Ctx, doc: RenderDoc, anchor: Anchor, from: number, alpha: number): void {
+  if (anchor === 'bottom') return shade(ctx, doc, from, alpha)
+  if (anchor === 'middle') return dim(ctx, doc, alpha * 0.55)
+  const { width: W, height: H } = ctx.canvas
+  const colour = doc.project.theme.overlay
+  const to = 1 - from
+  const g = ctx.createLinearGradient(0, 0, 0, H * to)
+  g.addColorStop(0, rgba(colour, overlayAlpha(doc, alpha)))
+  g.addColorStop(1, rgba(colour, 0))
+  ctx.fillStyle = g
+  ctx.fillRect(0, 0, W, H * to)
 }
 
 /** Flat wash of the overlay colour over the whole slide. */

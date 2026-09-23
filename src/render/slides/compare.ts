@@ -1,7 +1,7 @@
 import type { Rect, RenderDoc, Slide } from '../../types'
 import { type Ctx, drawBackground, drawHandle, isLight } from '../draw'
 import { type TypeStyle, typeStyle } from '../style'
-import { drawTextBlock, headingLines, setFont } from '../text'
+import { drawTextBlock, headingLines, setFont , placement } from '../text'
 
 /** Before on top, after underneath. */
 export function compareFrames(w: number, h: number): Rect[] {
@@ -27,7 +27,7 @@ function drawTag(ctx: Ctx, ts: TypeStyle, text: string, x: number, y: number): v
   ctx.restore()
 }
 
-export function drawCompare(ctx: Ctx, slide: Slide, doc: RenderDoc): void {
+export function drawCompare(ctx: Ctx, slide: Slide, doc: RenderDoc): Rect | null {
   const { width: W, height: H } = doc
   const ts = typeStyle(doc)
   const frames = compareFrames(W, H)
@@ -44,10 +44,9 @@ export function drawCompare(ctx: Ctx, slide: Slide, doc: RenderDoc): void {
   })
 
   const title = slide.title.trim()
-  if (title) {
-    const lines = headingLines(ctx, ts, title, W - 160, { start: 120, min: 56, step: 4, maxLines: 2 })
-    drawTextBlock(ctx, lines, { align: 'center', anchor: 'middle', x: W / 2, y: H / 2 }, ts)
-  }
+  const lines = title ? headingLines(ctx, ts, title, W - 160, { start: 120, min: 56, step: 4, maxLines: 2 }) : []
+  const box = drawTextBlock(ctx, lines, placement(slide, doc), ts)
 
   drawHandle(ctx, doc, 'right', W - 60, 80, 30, 0.75)
+  return box
 }

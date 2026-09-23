@@ -1,7 +1,7 @@
-import type { RenderDoc, Slide } from '../../types'
+import type { Rect, RenderDoc, Slide } from '../../types'
 import { type Ctx, dim, drawBackground, drawHandle } from '../draw'
 import { type TypeStyle, typeStyle } from '../style'
-import { type TextLine, blockHeight, bodyLine, drawTextBlock, headingLines, setFont, wrap } from '../text'
+import { type TextLine, blockHeight, bodyLine, drawTextBlock, headingLines, setFont, wrap , placement } from '../text'
 
 /** Numbered items, wrapped lines hanging under the item text. */
 function itemLines(ctx: Ctx, ts: TypeStyle, items: string[], size: number, maxWidth: number): TextLine[] {
@@ -19,7 +19,7 @@ function itemLines(ctx: Ctx, ts: TypeStyle, items: string[], size: number, maxWi
   return out
 }
 
-export function drawList(ctx: Ctx, slide: Slide, doc: RenderDoc): void {
+export function drawList(ctx: Ctx, slide: Slide, doc: RenderDoc): Rect | null {
   const { width: W, height: H } = doc
   const ts = typeStyle(doc)
   if (drawBackground(ctx, doc, slide, 0, null)) dim(ctx, doc, 0.6)
@@ -41,7 +41,8 @@ export function drawList(ctx: Ctx, slide: Slide, doc: RenderDoc): void {
     if (lines.length) body[0].gapBefore = 40
     lines.push(...body)
   }
-  drawTextBlock(ctx, lines, { align: 'left', anchor: 'middle', x: 80, y: H / 2 }, ts)
+  const box = drawTextBlock(ctx, lines, placement(slide, doc), ts)
 
   drawHandle(ctx, doc, 'right', W - 60, 80, 30, 0.75)
+  return box
 }

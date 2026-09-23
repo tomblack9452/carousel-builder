@@ -9,7 +9,8 @@ import { drawQuote } from './slides/quote'
 import { drawText } from './slides/text'
 
 export interface SlideRenderer {
-  draw: (ctx: Ctx, slide: Slide, doc: RenderDoc) => void
+  /** Returns the bounds of the movable text block, if any was drawn. */
+  draw: (ctx: Ctx, slide: Slide, doc: RenderDoc) => Rect | null
   /** Where each image slot sits on the slide. Defaults to one full-bleed frame. */
   frames?: (w: number, h: number) => Rect[]
 }
@@ -29,11 +30,12 @@ export function slotFrames(slide: Slide, w: number, h: number): Rect[] {
   return renderers[slide.type].frames?.(w, h) ?? [{ x: 0, y: 0, w, h }]
 }
 
-export function renderSlide(ctx: Ctx, slide: Slide, doc: RenderDoc): void {
+/** Draw a slide. Returns the text block's bounds so the editor can let you drag it. */
+export function renderSlide(ctx: Ctx, slide: Slide, doc: RenderDoc): Rect | null {
   ctx.setTransform(1, 0, 0, 1, 0, 0)
   ctx.filter = 'none'
   ctx.textAlign = 'left'
   ctx.textBaseline = 'alphabetic'
   ctx.clearRect(0, 0, doc.width, doc.height)
-  renderers[slide.type].draw(ctx, slide, doc)
+  return renderers[slide.type].draw(ctx, slide, doc)
 }
