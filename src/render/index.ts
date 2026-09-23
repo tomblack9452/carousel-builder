@@ -37,5 +37,24 @@ export function renderSlide(ctx: Ctx, slide: Slide, doc: RenderDoc): Rect | null
   ctx.textAlign = 'left'
   ctx.textBaseline = 'alphabetic'
   ctx.clearRect(0, 0, doc.width, doc.height)
-  return renderers[slide.type].draw(ctx, slide, doc)
+  const box = renderers[slide.type].draw(ctx, slide, doc)
+  drawLogo(ctx, doc)
+  return box
+}
+
+const LOGO_MARGIN = 50
+
+/** The project watermark, in its corner, keeping the logo's proportions. */
+function drawLogo(ctx: Ctx, doc: RenderDoc): void {
+  const { asset, position, size, opacity } = doc.project.logo
+  const img = asset ? doc.images[asset] : undefined
+  if (!img) return
+  const w = doc.width * size
+  const h = w * (img.naturalHeight / img.naturalWidth)
+  const x = position.endsWith('left') ? LOGO_MARGIN : doc.width - LOGO_MARGIN - w
+  const y = position.startsWith('top') ? LOGO_MARGIN : doc.height - LOGO_MARGIN - h
+  ctx.save()
+  ctx.globalAlpha = opacity
+  ctx.drawImage(img, x, y, w, h)
+  ctx.restore()
 }

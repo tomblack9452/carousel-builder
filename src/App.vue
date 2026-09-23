@@ -1,6 +1,7 @@
 <script lang="ts">
 import { defineComponent } from 'vue'
 import { mapStores } from 'pinia'
+import { useBrandStore } from './stores/brand'
 import { useHistoryStore } from './stores/history'
 import { useProjectStore } from './stores/project'
 import AppSidebar from './components/AppSidebar.vue'
@@ -17,10 +18,12 @@ export default defineComponent({
   name: 'App',
   components: { AppSidebar, IconButton, SlideGrid },
   computed: {
-    ...mapStores(useProjectStore, useHistoryStore),
+    ...mapStores(useProjectStore, useHistoryStore, useBrandStore),
   },
   mounted() {
-    this.projectStore.init().then(() => this.historyStore.start())
+    this.brandStore.load()
+      .then(() => this.projectStore.init(this.brandStore.assetIds))
+      .then(() => this.historyStore.start())
     window.addEventListener('keydown', this.onKeydown)
   },
   watch: {

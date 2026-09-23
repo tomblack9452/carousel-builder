@@ -1,8 +1,8 @@
 import { ASPECTS, MAX_SLIDES } from '../constants'
 import { clamp } from '../render/geometry'
 import { FONT_PAIRS } from '../fonts/catalog'
-import type { ImageSlot, Project, Slide, Theme } from '../types'
-import { createSlot, createSlide, defaultTheme, starterProject } from './factory'
+import type { BrandKit, Corner, ImageSlot, Logo, Project, Slide, Theme } from '../types'
+import { createSlot, createSlide, defaultLogo, defaultTheme, starterProject } from './factory'
 import { SLIDE_TYPES } from './slideTypes'
 
 /*
@@ -79,6 +79,24 @@ function normalizeTheme(raw: unknown, legacyAccent: unknown): Theme {
   }
 }
 
+const CORNERS: Corner[] = ['top-left', 'top-right', 'bottom-left', 'bottom-right']
+
+function normalizeLogo(raw: unknown): Logo {
+  const d = defaultLogo()
+  if (!isObject(raw)) return d
+  return {
+    asset: isAssetId(raw.asset) ? raw.asset : null,
+    position: CORNERS.includes(raw.position as Corner) ? (raw.position as Corner) : d.position,
+    size: num(raw.size, d.size, 0.05, 0.35),
+    opacity: num(raw.opacity, d.opacity, 0.1, 1),
+  }
+}
+
+export function normalizeBrandKit(raw: unknown): BrandKit | null {
+  if (!isObject(raw)) return null
+  return { handle: str(raw.handle), theme: normalizeTheme(raw.theme, undefined), logo: normalizeLogo(raw.logo) }
+}
+
 export function normalizeProject(raw: unknown): Project {
   if (!isObject(raw)) throw new Error('Not a project')
   const defaults = starterProject()
@@ -91,6 +109,7 @@ export function normalizeProject(raw: unknown): Project {
     aspect: typeof raw.aspect === 'string' && raw.aspect in ASPECTS ? (raw.aspect as Project['aspect']) : defaults.aspect,
     handle: str(raw.handle, defaults.handle),
     theme: normalizeTheme(raw.theme, raw.accent),
+    logo: normalizeLogo(raw.logo),
     slides,
   }
 }
@@ -98,6 +117,7 @@ export function normalizeProject(raw: unknown): Project {
 /** Every asset id a project points at, including slots its current types don't show. */
 export function projectAssetIds(project: Project): Set<string> {
   const ids = new Set<string>()
+  if (project.logo.asset) ids.add(project.logo.asset)
   for (const slide of project.slides) for (const slot of slide.images) if (slot.asset) ids.add(slot.asset)
   return ids
 }

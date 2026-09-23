@@ -2,6 +2,7 @@
 import { defineComponent } from 'vue'
 import { mapStores } from 'pinia'
 import { ASPECTS } from '../../constants'
+import { useBrandStore } from '../../stores/brand'
 import { useProjectStore } from '../../stores/project'
 import SidebarSection from './SidebarSection.vue'
 
@@ -12,7 +13,7 @@ export default defineComponent({
     return { ASPECTS }
   },
   computed: {
-    ...mapStores(useProjectStore),
+    ...mapStores(useProjectStore, useBrandStore),
     saveNote(): string {
       switch (this.projectStore.saveState) {
         case 'saved': return 'Changes are saved in this browser automatically.'
@@ -23,7 +24,9 @@ export default defineComponent({
   },
   methods: {
     newProject() {
-      if (window.confirm('Start a new project? Your current slides will be replaced.')) this.projectStore.newProject()
+      if (window.confirm('Start a new project? Your current slides will be replaced.')) {
+        this.projectStore.newProject(this.brandStore.kit)
+      }
     },
     openPicker() {
       (this.$refs.file as HTMLInputElement).click()

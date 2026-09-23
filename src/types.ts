@@ -74,11 +74,30 @@ export interface Theme {
 
 export type TitleEffect = 'hard' | 'glow' | 'none'
 
+export type Corner = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
+
+/** Watermark drawn on every slide. */
+export interface Logo {
+  asset: string | null
+  position: Corner
+  /** Width as a fraction of the slide width. */
+  size: number
+  opacity: number
+}
+
 export interface Project {
   aspect: AspectId
   handle: string
   theme: Theme
+  logo: Logo
   slides: Slide[]
+}
+
+/** Saved look that new projects start from. */
+export interface BrandKit {
+  handle: string
+  theme: Theme
+  logo: Logo
 }
 
 export interface Rect {

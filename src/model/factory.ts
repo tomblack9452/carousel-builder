@@ -1,4 +1,4 @@
-import type { Adjustments, ImageSlot, Project, Slide, SlideType, Theme } from '../types'
+import type { Adjustments, ImageSlot, Logo, Project, Slide, SlideType, Theme } from '../types'
 import { PRESETS, presetTheme } from './presets'
 import { DEFAULT_TEXT } from './textLayout'
 import { SLIDE_TYPES } from './slideTypes'
@@ -79,12 +79,17 @@ export function defaultTheme(): Theme {
   return presetTheme(PRESETS[0].id)
 }
 
+export function defaultLogo(): Logo {
+  return { asset: null, position: 'top-left', size: 0.12, opacity: 0.9 }
+}
+
 /** The project a first-time visitor starts with. */
 export function starterProject(): Project {
   return {
     aspect: '4:5',
     handle: '@yourhandle',
     theme: defaultTheme(),
+    logo: defaultLogo(),
     slides: [
       createSlide('cover', { title: 'Swipe through\nfor the full story' }),
       ...Array.from({ length: 5 }, () => createSlide('image')),

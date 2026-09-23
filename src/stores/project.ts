@@ -13,7 +13,7 @@ import { readProjectFile, writeProjectFile } from '../persist/projectFile'
 import { slotFrames } from '../render'
 import { clamp, fitImage } from '../render/geometry'
 import { alignX, layoutFromBox, snapY } from '../model/textLayout'
-import type { Adjustments, Align, Anchor, ImageSlot, Rect, RenderDoc, Slide, SlideType } from '../types'
+import type { Adjustments, Align, Anchor, BrandKit, ImageSlot, Rect, RenderDoc, Slide, SlideType } from '../types'
 import { assetBlob, useAssetStore } from './assets'
 
 const SAVE_KEY = 'project'
@@ -54,8 +54,11 @@ export const useProjectStore = defineStore('project', {
   },
 
   actions: {
-    /** Restore the last session from browser storage, then autosave every change. */
-    async init() {
+    /**
+     * Restore the last session from browser storage, then autosave every change.
+     * `keep` lists stored images used outside the project (e.g. the brand kit logo).
+     */
+    async init(keep: string[] = []) {
       const assets = useAssetStore()
       try {
         const saved = await db.get<string>(SAVE_KEY)
@@ -67,7 +70,7 @@ export const useProjectStore = defineStore('project', {
         }
         lastSaved = JSON.stringify(this.project)
         this.saveState = 'saved'
-        assets.collectGarbage(projectAssetIds(this.project))
+        assets.collectGarbage(new Set([...projectAssetIds(this.project), ...keep]))
       } catch {
         this.saveState = 'unavailable'
       }
@@ -97,11 +100,23 @@ export const useProjectStore = defineStore('project', {
       this.fontsVersion++
     },
 
-    /** Replace the slides with a short sample project, keeping size, handle and style. */
-    newProject() {
-      const { aspect, handle, theme } = this.project
-      this.project = { ...blankProject(), aspect, handle, theme }
-      this.status = 'Started a new project.'
+    /**
+     * Replace the slides with a short sample project. Handle, style and logo
+     * come from the brand kit if there is one, else from the current project.
+     */
+    newProject(kit: BrandKit | null = null) {
+      const { handle, theme, logo } = kit ?? this.project
+      const look = JSON.parse(JSON.stringify({ handle, theme, logo })) as BrandKit
+      this.project = { ...blankProject(), aspect: this.project.aspect, ...look }
+      this.status = kit ? 'Started a new project from your brand kit.' : 'Started a new project.'
+    },
+
+    async setLogo(file: File) {
+      try {
+        this.project.logo.asset = await useAssetStore().add(file)
+      } catch {
+        this.status = `${file.name} couldn't be read as an image. Save it as PNG and try again.`
+      }
     },
 
     async saveProjectFile() {
