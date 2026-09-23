@@ -112,6 +112,8 @@ export function fitText(ctx: Ctx, text: string, face: Face, maxWidth: number, op
       && lines.every((l) => ctx.measureText(l).width <= maxWidth)
     if (fits) return best
   }
+  // A line too long for the slide even at the smallest size: wrap it rather than run off the edge.
+  if (noWrap) return fitText(ctx, text, face, maxWidth, { ...opts, noWrap: false })
   return best
 }
 
