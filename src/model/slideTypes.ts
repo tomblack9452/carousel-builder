@@ -18,25 +18,60 @@ export interface SlideTypeInfo {
   imageHint?: string
 }
 
+const OPTIONAL_BACKGROUND = 'Optional background image, dimmed behind the text.'
+
+/** In the order they're offered in the type picker. */
 export const SLIDE_TYPES: Record<SlideType, SlideTypeInfo> = {
   cover: {
     label: 'Cover',
     imageSlots: 1,
-    title: { label: 'Title', placeholder: 'One line per row', multiline: true },
+    title: { label: 'Title', placeholder: 'Title, one line per row', multiline: true },
     body: null,
   },
   image: {
     label: 'Image + caption',
     imageSlots: 1,
-    title: { label: 'Title', placeholder: 'Game name' },
-    body: { label: 'Subtitle', placeholder: 'Console, year' },
+    title: { label: 'Title', placeholder: 'Title' },
+    body: { label: 'Subtitle', placeholder: 'Subtitle' },
+  },
+  text: {
+    label: 'Text',
+    imageSlots: 1,
+    title: { label: 'Heading', placeholder: 'Heading' },
+    body: { label: 'Body', placeholder: 'Body text', multiline: true },
+    imagesOptional: true,
+    imageHint: OPTIONAL_BACKGROUND,
+  },
+  quote: {
+    label: 'Quote',
+    imageSlots: 1,
+    title: { label: 'Quote', placeholder: 'The quote', multiline: true },
+    body: { label: 'Attribution', placeholder: 'Who said it' },
+    imagesOptional: true,
+    imageHint: OPTIONAL_BACKGROUND,
+  },
+  list: {
+    label: 'List',
+    imageSlots: 1,
+    title: { label: 'Heading', placeholder: 'Heading' },
+    body: { label: 'Items', placeholder: 'One item per line', multiline: true },
+    imagesOptional: true,
+    imageHint: OPTIONAL_BACKGROUND,
+  },
+  compare: {
+    label: 'Before / after',
+    imageSlots: 2,
+    title: { label: 'Heading', placeholder: 'Heading (optional)' },
+    body: { label: 'Labels', placeholder: 'One label per line, e.g. Before / After', multiline: true },
   },
   cta: {
     label: 'Call to action',
     imageSlots: 1,
-    title: { label: 'Heading', placeholder: "Which one's yours?" },
-    body: { label: 'Subline', placeholder: 'Tell me in the comments' },
+    title: { label: 'Heading', placeholder: 'Heading' },
+    body: { label: 'Subline', placeholder: 'Subline' },
     imagesOptional: true,
     imageHint: 'Optional. Without one, the cover image is used, blurred.',
   },
 }
+
+export const SLIDE_TYPE_ORDER = Object.keys(SLIDE_TYPES) as SlideType[]

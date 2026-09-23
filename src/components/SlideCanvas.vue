@@ -1,10 +1,11 @@
 <script lang="ts">
 import { defineComponent, watchEffect, type PropType, type WatchStopHandle } from 'vue'
 import { mapStores } from 'pinia'
+import { SLIDE_TYPES } from '../model/slideTypes'
 import { renderSlide, slotFrames } from '../render'
 import { contains } from '../render/geometry'
 import { useProjectStore } from '../stores/project'
-import type { Slide } from '../types'
+import type { ImageSlot, Slide } from '../types'
 
 const NUDGE_KEYS: Record<string, [number, number]> = {
   ArrowLeft: [-0.05, 0],
@@ -37,11 +38,15 @@ export default defineComponent({
   },
   computed: {
     ...mapStores(useProjectStore),
+    /** The image slots this slide type actually uses. */
+    slots(): ImageSlot[] {
+      return this.slide.images.slice(0, SLIDE_TYPES[this.slide.type].imageSlots)
+    },
     interactive(): boolean {
-      return this.slide.images.length > 0
+      return this.slots.length > 0
     },
     empty(): boolean {
-      return this.interactive && this.slide.images.every((s) => !s.asset)
+      return this.interactive && this.slots.every((s) => !s.asset)
     },
     aspectRatio(): string {
       return `${this.projectStore.doc.width} / ${this.projectStore.doc.height}`
@@ -74,14 +79,14 @@ export default defineComponent({
     },
     slotAt(x: number, y: number): number {
       const frames = slotFrames(this.slide, this.projectStore.doc.width, this.projectStore.doc.height)
-      const hit = frames.findIndex((f, i) => i < this.slide.images.length && contains(f, x, y))
+      const hit = frames.findIndex((f, i) => i < this.slots.length && contains(f, x, y))
       return Math.max(0, hit)
     },
     onPointerDown(event: PointerEvent) {
       if (!this.interactive) return
       const { x, y } = this.toSlide(event)
       const slot = this.slotAt(x, y)
-      if (!this.slide.images[slot].asset) {
+      if (!this.slots[slot].asset) {
         this.$emit('pick', slot)
         return
       }
@@ -102,7 +107,7 @@ export default defineComponent({
     onKeydown(event: KeyboardEvent) {
       if (!this.interactive) return
       // Keyboard acts on the first slot that has an image, else offers a picker.
-      const slot = this.slide.images.findIndex((s) => s.asset)
+      const slot = this.slots.findIndex((s) => s.asset)
       if (slot < 0) {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault()

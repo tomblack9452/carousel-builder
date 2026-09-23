@@ -1,11 +1,11 @@
 import { defineStore } from 'pinia'
 import { H, W } from '../constants'
 import { downloadBlob, projectSlug, renderToBlob, slideFileName, zipSlides } from '../export/files'
-import { starterProject } from '../model/factory'
+import { changeSlideType, starterProject } from '../model/factory'
 import { SLIDE_TYPES } from '../model/slideTypes'
 import { slotFrames } from '../render'
 import { clamp, fitImage } from '../render/geometry'
-import type { ImageSlot, RenderDoc, Slide } from '../types'
+import type { ImageSlot, RenderDoc, Slide, SlideType } from '../types'
 import { useAssetStore } from './assets'
 
 export const useProjectStore = defineStore('project', {
@@ -27,7 +27,7 @@ export const useProjectStore = defineStore('project', {
     missingCount(state): number {
       return state.project.slides
         .filter((s) => !SLIDE_TYPES[s.type].imagesOptional)
-        .reduce((n, s) => n + s.images.filter((slot) => !slot.asset).length, 0)
+        .reduce((n, s) => n + s.images.slice(0, SLIDE_TYPES[s.type].imageSlots).filter((slot) => !slot.asset).length, 0)
     },
   },
 
@@ -66,6 +66,10 @@ export const useProjectStore = defineStore('project', {
 
     updateSlide(id: string, patch: Partial<Pick<Slide, 'title' | 'body'>>) {
       Object.assign(this.slide(id), patch)
+    },
+
+    changeType(id: string, type: SlideType) {
+      changeSlideType(this.slide(id), type)
     },
 
     updateSlot(id: string, slotIndex: number, patch: Partial<ImageSlot>) {

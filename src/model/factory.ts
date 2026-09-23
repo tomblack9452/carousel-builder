@@ -11,6 +11,17 @@ export function createSlot(): ImageSlot {
   return { asset: null, zoom: 1, px: 0, py: 0 }
 }
 
+/** Sample text for a freshly added slide, so it's obvious what each field does. */
+const SAMPLE_CONTENT: Record<SlideType, Pick<Slide, 'title' | 'body'>> = {
+  cover: { title: 'Your title\ngoes here', body: '' },
+  image: { title: '', body: '' },
+  text: { title: 'Heading', body: 'Write a short paragraph here.' },
+  quote: { title: 'Say something worth remembering', body: 'Someone' },
+  list: { title: 'Top tips', body: 'First thing\nSecond thing\nThird thing' },
+  compare: { title: '', body: 'Before\nAfter' },
+  cta: { title: 'Follow for more', body: 'Save this post for later' },
+}
+
 export function createSlide(type: SlideType, content: Partial<Pick<Slide, 'title' | 'body'>> = {}): Slide {
   return {
     id: uid(),
@@ -19,6 +30,20 @@ export function createSlide(type: SlideType, content: Partial<Pick<Slide, 'title
     body: content.body ?? '',
     images: Array.from({ length: SLIDE_TYPES[type].imageSlots }, createSlot),
   }
+}
+
+export function createSampleSlide(type: SlideType): Slide {
+  return createSlide(type, SAMPLE_CONTENT[type])
+}
+
+/**
+ * Switch a slide's type in place, adding image slots if the new type needs more.
+ * A slide with no text yet gets the new type's sample text.
+ */
+export function changeSlideType(slide: Slide, type: SlideType): void {
+  slide.type = type
+  while (slide.images.length < SLIDE_TYPES[type].imageSlots) slide.images.push(createSlot())
+  if (!slide.title.trim() && !slide.body.trim()) Object.assign(slide, SAMPLE_CONTENT[type])
 }
 
 /** The project a first-time visitor starts with. */

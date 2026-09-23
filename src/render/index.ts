@@ -1,8 +1,12 @@
 import type { Rect, RenderDoc, Slide, SlideType } from '../types'
 import type { Ctx } from './draw'
+import { compareFrames, drawCompare } from './slides/compare'
 import { drawCover } from './slides/cover'
 import { drawCta } from './slides/cta'
 import { drawImage } from './slides/image'
+import { drawList } from './slides/list'
+import { drawQuote } from './slides/quote'
+import { drawText } from './slides/text'
 
 export interface SlideRenderer {
   draw: (ctx: Ctx, slide: Slide, doc: RenderDoc) => void
@@ -14,6 +18,10 @@ export interface SlideRenderer {
 const renderers: Record<SlideType, SlideRenderer> = {
   cover: { draw: drawCover },
   image: { draw: drawImage },
+  text: { draw: drawText },
+  quote: { draw: drawQuote },
+  list: { draw: drawList },
+  compare: { draw: drawCompare, frames: compareFrames },
   cta: { draw: drawCta },
 }
 

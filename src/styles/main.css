@@ -31,6 +31,15 @@ input[type=text], textarea {
 }
 textarea { min-height: 92px; resize: vertical; }
 
+select {
+  background: var(--dusk);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font: inherit;
+}
+
 input[type=color] {
   width: 48px;
   height: 34px;

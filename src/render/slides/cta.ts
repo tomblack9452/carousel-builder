@@ -1,6 +1,7 @@
 import { SUB_FONT, TITLE_FONT } from '../../constants'
 import type { ImageSlot, RenderDoc, Slide } from '../../types'
-import { type Ctx, drawHandle, drawSlot, font, hardText, slotImage, wrapFit } from '../draw'
+import { type Ctx, drawHandle, drawSlot, slotImage } from '../draw'
+import { type TextLine, bodyLine, drawTextBlock, fitText, titleLine } from '../text'
 
 /** The slot to blur behind a call to action: its own image, else the cover's, else the first image slide's. */
 export function backgroundSlot(slide: Slide, doc: RenderDoc): ImageSlot | undefined {
@@ -29,31 +30,18 @@ export function drawCta(ctx: Ctx, slide: Slide, doc: RenderDoc): void {
     ctx.fillRect(0, 0, W, H)
   }
 
-  ctx.textAlign = 'center'
+  const lines: TextLine[] = []
   const title = slide.title.trim().toUpperCase()
-  let y = H * 0.44
   if (title) {
-    const { size, lines } = wrapFit(ctx, title, '', TITLE_FONT, W - 200, 160, 70, 3)
-    ctx.font = font('', size, TITLE_FONT)
-    const lineHeight = size * 1.02
-    y = H * 0.44 - ((lines.length - 1) * lineHeight) / 2
-    for (const line of lines) {
-      hardText(ctx, line, W / 2, y, Math.round(size * 0.06), project.accent)
-      y += lineHeight
-    }
+    const fit = fitText(ctx, title, TITLE_FONT, '', W - 200, { start: 160, min: 70, step: 4, maxLines: 3 })
+    lines.push(...fit.lines.map((l) => titleLine(l, fit.size)))
   }
-
   const body = slide.body.trim()
   if (body) {
-    const { size, lines } = wrapFit(ctx, body, 600, SUB_FONT, W - 240, 48, 30, 2)
-    ctx.font = font(600, size, SUB_FONT)
-    ctx.fillStyle = 'rgba(255,255,255,.9)'
-    let subY = y + 20
-    for (const line of lines) {
-      ctx.fillText(line, W / 2, subY)
-      subY += size * 1.2
-    }
+    const fit = fitText(ctx, body, SUB_FONT, 600, W - 240, { start: 48, min: 30, step: 4, maxLines: 2 })
+    fit.lines.forEach((l, i) => lines.push(bodyLine(l, fit.size, i === 0 && lines.length ? 24 : 0)))
   }
+  drawTextBlock(ctx, lines, { align: 'center', anchor: 'middle', x: W / 2, y: H * 0.47 }, project.accent)
 
   drawHandle(ctx, project.handle, 'center', W / 2, H - 90, 36, 0.9)
 }

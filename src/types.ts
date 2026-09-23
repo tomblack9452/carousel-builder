@@ -1,4 +1,4 @@
-export type SlideType = 'cover' | 'image' | 'cta'
+export type SlideType = 'cover' | 'image' | 'text' | 'quote' | 'list' | 'compare' | 'cta'
 
 export interface ImageSlot {
   /** Asset id in the asset store, or null when empty. */
@@ -17,6 +17,7 @@ export interface Slide {
   title: string
   /** Secondary text. */
   body: string
+  /** At least as many as the type uses. Extra slots are kept so switching type back restores them. */
   images: ImageSlot[]
 }
 
