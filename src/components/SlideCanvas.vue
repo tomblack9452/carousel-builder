@@ -59,7 +59,7 @@ export default defineComponent({
     // Re-renders whenever anything the renderer reads changes: this slide,
     // project settings, or another slide's image it borrows.
     this.stopRender = watchEffect(() => {
-      void this.projectStore.fontsReady
+      void this.projectStore.fontsVersion
       const doc = this.projectStore.doc
       if (canvas.width !== doc.width) canvas.width = doc.width
       if (canvas.height !== doc.height) canvas.height = doc.height

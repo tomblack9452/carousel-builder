@@ -1,4 +1,5 @@
-import type { ImageSlot, Project, Slide, SlideType } from '../types'
+import { DEFAULT_FONT_PAIR } from '../fonts/catalog'
+import type { ImageSlot, Project, Slide, SlideType, Theme } from '../types'
 import { SLIDE_TYPES } from './slideTypes'
 
 export function uid(): string {
@@ -65,12 +66,24 @@ export function blankProject(): Project {
   }
 }
 
+export function defaultTheme(): Theme {
+  return {
+    fontPair: DEFAULT_FONT_PAIR,
+    headingWeight: 400,
+    headingScale: 1,
+    bodyScale: 1,
+    letterSpacing: 0,
+    uppercase: true,
+    accent: '#ff7a3d',
+  }
+}
+
 /** The project a first-time visitor starts with. */
 export function starterProject(): Project {
   return {
     aspect: '4:5',
     handle: '@yourhandle',
-    accent: '#ff7a3d',
+    theme: defaultTheme(),
     slides: [
       createSlide('cover', { title: 'The beauty\nof sunset\nin games' }),
       ...Array.from({ length: 10 }, () => createSlide('image')),

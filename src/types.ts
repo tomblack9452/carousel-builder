@@ -23,11 +23,24 @@ export interface Slide {
   images: ImageSlot[]
 }
 
+export interface Theme {
+  /** Id from fonts/catalog. */
+  fontPair: string
+  headingWeight: number
+  /** Multipliers on each slide type's default text sizes. */
+  headingScale: number
+  bodyScale: number
+  /** Heading letter spacing in em. */
+  letterSpacing: number
+  uppercase: boolean
+  /** Title shadow and highlight colour. */
+  accent: string
+}
+
 export interface Project {
   aspect: AspectId
   handle: string
-  /** Title shadow colour. */
-  accent: string
+  theme: Theme
   slides: Slide[]
 }
 

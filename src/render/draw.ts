@@ -1,4 +1,5 @@
 import { SUB_FONT } from '../constants'
+import { fontPair, stack } from '../fonts/catalog'
 import type { ImageSlot, Rect, RenderDoc, Slide } from '../types'
 import { fitImage } from './geometry'
 
@@ -76,13 +77,14 @@ export function dim(ctx: Ctx, alpha: number): void {
 }
 
 export function drawHandle(
-  ctx: Ctx, handle: string, align: CanvasTextAlign,
+  ctx: Ctx, doc: RenderDoc, align: CanvasTextAlign,
   x: number, y: number, size: number, alpha: number,
 ): void {
-  const text = handle.trim()
+  const text = doc.project.handle.trim()
   if (!text) return
   ctx.save()
-  ctx.font = font(600, size, SUB_FONT)
+  const pair = fontPair(doc.project.theme.fontPair)
+  ctx.font = font(Math.max(...pair.body.weights), size, stack(pair.body))
   ctx.textAlign = align
   ctx.fillStyle = `rgba(255,255,255,${alpha})`
   ctx.shadowColor = 'rgba(0,0,0,.55)'

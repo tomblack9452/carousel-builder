@@ -1,7 +1,8 @@
 import { ASPECTS, MAX_SLIDES } from '../constants'
 import { clamp } from '../render/geometry'
-import type { ImageSlot, Project, Slide } from '../types'
-import { createSlot, createSlide, starterProject } from './factory'
+import { FONT_PAIRS } from '../fonts/catalog'
+import type { ImageSlot, Project, Slide, Theme } from '../types'
+import { createSlot, createSlide, defaultTheme, starterProject } from './factory'
 import { SLIDE_TYPES } from './slideTypes'
 
 /*
@@ -39,6 +40,21 @@ function normalizeSlide(raw: unknown): Slide | null {
   return slide
 }
 
+function normalizeTheme(raw: unknown, legacyAccent: unknown): Theme {
+  const d = defaultTheme()
+  const t = isObject(raw) ? raw : {}
+  return {
+    fontPair: typeof t.fontPair === 'string' && FONT_PAIRS.some((p) => p.id === t.fontPair) ? t.fontPair : d.fontPair,
+    headingWeight: num(t.headingWeight, d.headingWeight, 100, 900),
+    headingScale: num(t.headingScale, d.headingScale, 0.6, 1.4),
+    bodyScale: num(t.bodyScale, d.bodyScale, 0.6, 1.4),
+    letterSpacing: num(t.letterSpacing, d.letterSpacing, -0.1, 0.3),
+    uppercase: typeof t.uppercase === 'boolean' ? t.uppercase : d.uppercase,
+    // Early saves kept the accent at the top level.
+    accent: colour(t.accent ?? legacyAccent, d.accent),
+  }
+}
+
 export function normalizeProject(raw: unknown): Project {
   if (!isObject(raw)) throw new Error('Not a project')
   const defaults = starterProject()
@@ -50,7 +66,7 @@ export function normalizeProject(raw: unknown): Project {
   return {
     aspect: typeof raw.aspect === 'string' && raw.aspect in ASPECTS ? (raw.aspect as Project['aspect']) : defaults.aspect,
     handle: str(raw.handle, defaults.handle),
-    accent: colour(raw.accent, defaults.accent),
+    theme: normalizeTheme(raw.theme, raw.accent),
     slides,
   }
 }

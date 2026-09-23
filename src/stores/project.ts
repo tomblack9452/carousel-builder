@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { ASPECTS, MAX_SLIDES } from '../constants'
 import { downloadBlob, projectSlug, renderToBlob, slideFileName, zipSlides } from '../export/files'
+import { fontPair } from '../fonts/catalog'
+import { loadFontPair } from '../fonts/loader'
 import { blankProject, changeSlideType, cloneSlide, createSampleSlide, createSlide, starterProject } from '../model/factory'
 import { normalizeProject, projectAssetIds } from '../model/normalize'
 import { SLIDE_TYPES } from '../model/slideTypes'
@@ -22,8 +24,8 @@ export const useProjectStore = defineStore('project', {
   state: () => ({
     project: starterProject(),
     status: '',
-    /** Flips once web fonts load so canvases redraw with them. */
-    fontsReady: false,
+    /** Bumped whenever web fonts finish loading, so canvases redraw with them. */
+    fontsVersion: 0,
     saveState: 'loading' as SaveState,
   }),
 
@@ -86,10 +88,16 @@ export const useProjectStore = defineStore('project', {
       }
     },
 
-    /** Replace the slides with a short sample project, keeping size, handle and colour. */
+    /** Load the theme's fonts (once per pair), then redraw. */
+    async ensureFonts() {
+      await loadFontPair(fontPair(this.project.theme.fontPair))
+      this.fontsVersion++
+    },
+
+    /** Replace the slides with a short sample project, keeping size, handle and style. */
     newProject() {
-      const { aspect, handle, accent } = this.project
-      this.project = { ...blankProject(), aspect, handle, accent }
+      const { aspect, handle, theme } = this.project
+      this.project = { ...blankProject(), aspect, handle, theme }
       this.status = 'Started a new project.'
     },
 
@@ -219,7 +227,8 @@ export const useProjectStore = defineStore('project', {
     },
 
     async downloadSlide(id: string) {
-      const index = this.project.slides.findIndex((s) => s.id === id)
+      await this.ensureFonts()
+      const index = this.indexOf(id)
       const slide = this.project.slides[index]
       downloadBlob(await renderToBlob(slide, this.doc), slideFileName(slide, index))
     },
@@ -228,6 +237,7 @@ export const useProjectStore = defineStore('project', {
       const missing = this.missingCount
       const name = `${projectSlug(this.doc)}.zip`
       if (missing) this.status = `${missing} slide${missing > 1 ? 's have' : ' has'} no image yet. Downloading anyway.`
+      await this.ensureFonts()
       downloadBlob(await zipSlides(this.doc), name)
       if (!missing) this.status = `Downloaded ${name} with all ${this.project.slides.length} slides.`
     },

@@ -7,7 +7,7 @@ export const ASPECTS: Record<AspectId, { label: string; width: number; height: n
   '1:1': { label: 'Square 1:1', width: 1080, height: 1080 },
 }
 
-export const TITLE_FONT = 'Anton, Impact, "Arial Narrow", sans-serif'
+/** Used for editor-only text drawn on slides, like drop prompts. */
 export const SUB_FONT = '"Barlow Condensed", "Arial Narrow", sans-serif'
 
 /** Upscaling beyond this makes an image look soft once posted. */

@@ -22,13 +22,15 @@ export default defineComponent({
   mounted() {
     this.projectStore.init().then(() => this.historyStore.start())
     window.addEventListener('keydown', this.onKeydown)
-
-    // Canvas text only uses a web font once it's loaded, so redraw when they arrive.
-    Promise.all([document.fonts.load('40px Anton'), document.fonts.load('600 40px "Barlow Condensed"')])
-      .catch(() => {})
-      .finally(() => {
-        this.projectStore.fontsReady = true
-      })
+  },
+  watch: {
+    // Canvas text only uses a web font once it's loaded, so load the chosen pair and redraw.
+    'projectStore.project.theme.fontPair': {
+      handler() {
+        this.projectStore.ensureFonts()
+      },
+      immediate: true,
+    },
   },
   unmounted() {
     window.removeEventListener('keydown', this.onKeydown)

@@ -1,7 +1,7 @@
-import { SUB_FONT, TITLE_FONT } from '../../constants'
 import type { Rect, RenderDoc, Slide } from '../../types'
-import { type Ctx, drawBackground, drawHandle, font } from '../draw'
-import { drawTextBlock, fitText, titleLine } from '../text'
+import { type Ctx, drawBackground, drawHandle } from '../draw'
+import { type TypeStyle, typeStyle } from '../style'
+import { drawTextBlock, headingLines, setFont } from '../text'
 
 /** Before on top, after underneath. */
 export function compareFrames(w: number, h: number): Rect[] {
@@ -11,13 +11,13 @@ export function compareFrames(w: number, h: number): Rect[] {
   ]
 }
 
-function drawTag(ctx: Ctx, text: string, x: number, y: number, accent: string): void {
+function drawTag(ctx: Ctx, ts: TypeStyle, text: string, x: number, y: number): void {
   ctx.save()
-  ctx.font = font(600, 40, SUB_FONT)
+  setFont(ctx, ts.bodyBold, 40)
   const padX = 22
   const w = ctx.measureText(text).width + padX * 2
   const h = 60
-  ctx.fillStyle = accent
+  ctx.fillStyle = ts.accent
   ctx.beginPath()
   ctx.roundRect(x, y, w, h, h / 2)
   ctx.fill()
@@ -28,7 +28,8 @@ function drawTag(ctx: Ctx, text: string, x: number, y: number, accent: string): 
 }
 
 export function drawCompare(ctx: Ctx, slide: Slide, doc: RenderDoc): void {
-  const { width: W, height: H, project } = doc
+  const { width: W, height: H } = doc
+  const ts = typeStyle(doc)
   const frames = compareFrames(W, H)
   const prompts = ['Drop the before image', 'Drop the after image']
   frames.forEach((frame, i) => drawBackground(ctx, doc, slide, i, prompts[i], frame))
@@ -39,14 +40,14 @@ export function drawCompare(ctx: Ctx, slide: Slide, doc: RenderDoc): void {
 
   const labels = slide.body.split('\n').map((l) => l.trim()).filter(Boolean)
   frames.forEach((frame, i) => {
-    if (labels[i]) drawTag(ctx, labels[i].toUpperCase(), 48, frame.y + 48, project.accent)
+    if (labels[i]) drawTag(ctx, ts, labels[i].toUpperCase(), 48, frame.y + 48)
   })
 
-  const title = slide.title.trim().toUpperCase()
+  const title = slide.title.trim()
   if (title) {
-    const fit = fitText(ctx, title, TITLE_FONT, '', W - 160, { start: 120, min: 56, step: 4, maxLines: 2 })
-    drawTextBlock(ctx, fit.lines.map((l) => titleLine(l, fit.size)), { align: 'center', anchor: 'middle', x: W / 2, y: H / 2 }, project.accent)
+    const lines = headingLines(ctx, ts, title, W - 160, { start: 120, min: 56, step: 4, maxLines: 2 })
+    drawTextBlock(ctx, lines, { align: 'center', anchor: 'middle', x: W / 2, y: H / 2 }, ts.accent)
   }
 
-  drawHandle(ctx, project.handle, 'right', W - 60, 80, 30, 0.75)
+  drawHandle(ctx, doc, 'right', W - 60, 80, 30, 0.75)
 }

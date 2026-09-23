@@ -1,7 +1,7 @@
-import { SUB_FONT, TITLE_FONT } from '../../constants'
 import type { ImageSlot, RenderDoc, Slide } from '../../types'
 import { type Ctx, drawHandle, drawSlot, slotImage } from '../draw'
-import { type TextLine, bodyLine, drawTextBlock, fitText, titleLine } from '../text'
+import { typeStyle } from '../style'
+import { type TextLine, bodyLines, drawTextBlock, headingLines } from '../text'
 
 /** The slot to blur behind a call to action: its own image, else the cover's, else the first image slide's. */
 export function backgroundSlot(slide: Slide, doc: RenderDoc): ImageSlot | undefined {
@@ -13,7 +13,8 @@ export function backgroundSlot(slide: Slide, doc: RenderDoc): ImageSlot | undefi
 }
 
 export function drawCta(ctx: Ctx, slide: Slide, doc: RenderDoc): void {
-  const { width: W, height: H, project } = doc
+  const { width: W, height: H } = doc
+  const ts = typeStyle(doc)
   const slot = backgroundSlot(slide, doc)
   const img = slotImage(doc, slot)
   if (slot && img) {
@@ -31,17 +32,13 @@ export function drawCta(ctx: Ctx, slide: Slide, doc: RenderDoc): void {
   }
 
   const lines: TextLine[] = []
-  const title = slide.title.trim().toUpperCase()
-  if (title) {
-    const fit = fitText(ctx, title, TITLE_FONT, '', W - 200, { start: 160, min: 70, step: 4, maxLines: 3 })
-    lines.push(...fit.lines.map((l) => titleLine(l, fit.size)))
-  }
+  const title = slide.title.trim()
+  if (title) lines.push(...headingLines(ctx, ts, title, W - 200, { start: 160, min: 70, step: 4, maxLines: 3 }))
   const body = slide.body.trim()
   if (body) {
-    const fit = fitText(ctx, body, SUB_FONT, 600, W - 240, { start: 48, min: 30, step: 4, maxLines: 2 })
-    fit.lines.forEach((l, i) => lines.push(bodyLine(l, fit.size, i === 0 && lines.length ? 24 : 0)))
+    lines.push(...bodyLines(ctx, ts, body, W - 240, { start: 48, min: 30, step: 4, maxLines: 2, gapBefore: lines.length ? 24 : 0 }))
   }
-  drawTextBlock(ctx, lines, { align: 'center', anchor: 'middle', x: W / 2, y: H * 0.47 }, project.accent)
+  drawTextBlock(ctx, lines, { align: 'center', anchor: 'middle', x: W / 2, y: H * 0.47 }, ts.accent)
 
-  drawHandle(ctx, project.handle, 'center', W / 2, H - 90, 36, 0.9)
+  drawHandle(ctx, doc, 'center', W / 2, H - 90, 36, 0.9)
 }

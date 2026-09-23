@@ -1,7 +1,7 @@
-import { SUB_FONT, TITLE_FONT } from '../constants'
 import type { Rect } from '../types'
 import { clamp } from './geometry'
-import { type Ctx, font } from './draw'
+import type { Ctx } from './draw'
+import type { Face, TypeStyle } from './style'
 
 /** Keep text blocks at least this far from the slide edges. */
 const SAFE = 60
@@ -15,8 +15,7 @@ export interface Segment {
 
 export interface TextLine {
   segments: Segment[]
-  family: string
-  weight: number | ''
+  face: Face
   size: number
   color: string
   /** Line box height as a multiple of size. */
@@ -39,12 +38,31 @@ export interface Placement {
   y: number
 }
 
-export function titleLine(text: string, size: number, gapBefore = 0): TextLine {
-  return { segments: [{ text }], family: TITLE_FONT, weight: '', size, color: '#fff', lineHeight: 1.02, style: 'title', gapBefore }
+export function setFont(ctx: Ctx, face: Face, size: number): void {
+  ctx.font = `${face.weight} ${size}px ${face.family}`
+  ctx.letterSpacing = `${face.letterSpacing * size}px`
 }
 
-export function bodyLine(text: string, size: number, gapBefore = 0, color = 'rgba(255,255,255,.9)'): TextLine {
-  return { segments: [{ text }], family: SUB_FONT, weight: 600, size, color, lineHeight: 1.2, style: 'body', gapBefore }
+export function titleLine(ts: TypeStyle, text: string, size: number, gapBefore = 0): TextLine {
+  return { segments: [{ text }], face: ts.heading, size, color: '#fff', lineHeight: 1.05, style: 'title', gapBefore }
+}
+
+export interface BodyOptions {
+  gapBefore?: number
+  color?: string
+  bold?: boolean
+}
+
+export function bodyLine(ts: TypeStyle, text: string, size: number, opts: BodyOptions = {}): TextLine {
+  return {
+    segments: [{ text }],
+    face: opts.bold === false ? ts.body : ts.bodyBold,
+    size,
+    color: opts.color ?? 'rgba(255,255,255,.9)',
+    lineHeight: 1.25,
+    style: 'body',
+    gapBefore: opts.gapBefore ?? 0,
+  }
 }
 
 /** Word-wrap with the current ctx.font. Newlines in `text` always break. */
@@ -78,13 +96,11 @@ export interface FitOptions {
  * Largest size from `start` down to `min` at which `text` fits `maxWidth`
  * within the line and height limits. Returns the `min` layout if nothing fits.
  */
-export function fitText(
-  ctx: Ctx, text: string, family: string, weight: number | '', maxWidth: number, opts: FitOptions,
-): { size: number; lines: string[] } {
+export function fitText(ctx: Ctx, text: string, face: Face, maxWidth: number, opts: FitOptions): { size: number; lines: string[] } {
   const { start, min, step = 2, maxLines = Infinity, maxHeight = Infinity, lineHeight = 1.2, noWrap = false } = opts
   let best = { size: min, lines: [] as string[] }
-  for (let size = start; size >= min; size -= step) {
-    ctx.font = font(weight, size, family)
+  for (let size = Math.round(start); size >= min; size -= step) {
+    setFont(ctx, face, size)
     const lines = noWrap ? text.split('\n').filter(Boolean) : wrap(ctx, text, maxWidth)
     best = { size, lines }
     const fits = lines.length <= maxLines
@@ -95,12 +111,35 @@ export function fitText(
   return best
 }
 
+/** Fit heading text, applying the theme's case and size scale. */
+export function headingLines(ctx: Ctx, ts: TypeStyle, text: string, maxWidth: number, opts: FitOptions): TextLine[] {
+  const fit = fitText(ctx, ts.caps(text), ts.heading, maxWidth, {
+    lineHeight: 1.05,
+    ...opts,
+    start: opts.start * ts.headingScale,
+    min: opts.min * ts.headingScale,
+  })
+  return fit.lines.map((l) => titleLine(ts, l, fit.size))
+}
+
+/** Fit body text, applying the theme's size scale. */
+export function bodyLines(ctx: Ctx, ts: TypeStyle, text: string, maxWidth: number, opts: FitOptions & BodyOptions): TextLine[] {
+  const face = opts.bold === false ? ts.body : ts.bodyBold
+  const fit = fitText(ctx, text, face, maxWidth, {
+    lineHeight: 1.25,
+    ...opts,
+    start: opts.start * ts.bodyScale,
+    min: opts.min * ts.bodyScale,
+  })
+  return fit.lines.map((l, i) => bodyLine(ts, l, fit.size, { ...opts, gapBefore: i === 0 ? opts.gapBefore : 0 }))
+}
+
 function lineWidth(ctx: Ctx, line: TextLine): number {
-  ctx.font = font(line.weight, line.size, line.family)
+  setFont(ctx, line.face, line.size)
   return line.segments.reduce((w, s) => w + (s.width ?? ctx.measureText(s.text).width), line.indent ?? 0)
 }
 
-function blockHeight(lines: TextLine[]): number {
+export function blockHeight(lines: TextLine[]): number {
   return lines.reduce((h, l) => h + (l.gapBefore ?? 0) + l.size * l.lineHeight, 0)
 }
 
@@ -124,7 +163,7 @@ export function drawTextBlock(ctx: Ctx, lines: TextLine[], place: Placement, acc
   lines.forEach((line, i) => {
     y += line.gapBefore ?? 0
     const box = line.size * line.lineHeight
-    ctx.font = font(line.weight, line.size, line.family)
+    setFont(ctx, line.face, line.size)
     // Centre capitals in the line box so different fonts sit the same way.
     const cap = ctx.measureText('H').actualBoundingBoxAscent
     const baseline = y + box / 2 + cap / 2
