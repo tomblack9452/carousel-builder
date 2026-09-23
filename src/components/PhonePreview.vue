@@ -35,6 +35,12 @@ export default defineComponent({
       return this.projectStore.project.caption.trim()
     },
   },
+  watch: {
+    // The feed track is rebuilt at slide 1 when you come back to it.
+    tab() {
+      this.current = 0
+    },
+  },
   methods: {
     async open() {
       await this.projectStore.ensureFonts()
@@ -42,6 +48,9 @@ export default defineComponent({
       this.current = 0
       this.expanded = false
       ;(this.$refs.dialog as HTMLDialogElement).showModal()
+      // The track keeps its scroll position between openings; start back at slide 1.
+      const track = this.$refs.track as HTMLElement | undefined
+      if (track) track.scrollLeft = 0
     },
     close() {
       (this.$refs.dialog as HTMLDialogElement).close()
