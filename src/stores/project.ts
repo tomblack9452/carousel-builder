@@ -16,7 +16,10 @@ import { slotFrames } from '../render'
 import { clamp, fitImage } from '../render/geometry'
 import { paletteFromImage } from '../render/palette'
 import { alignX, layoutFromBox, snapY } from '../model/textLayout'
-import type { Adjustments, Align, Anchor, BrandKit, ImageSlot, Rect, RenderDoc, Slide, SlideType } from '../types'
+import { createSticker } from '../model/stickers'
+import type {
+  Adjustments, Align, Anchor, BrandKit, ImageSlot, Rect, RenderDoc, Slide, SlideType, Sticker, StickerKind,
+} from '../types'
 import { assetBlob, useAssetStore } from './assets'
 
 const SAVE_KEY = 'project'
@@ -290,6 +293,23 @@ export const useProjectStore = defineStore('project', {
       const { start, count } = panoramaRun(slides, index)
       const source = slides[index].images[0]
       for (let i = start; i < start + count; i++) if (i !== index) Object.assign(slides[i].images[0], source)
+    },
+
+    /** Add a sticker in the middle of the slide. Shapes start in the accent colour. Returns its id. */
+    addSticker(id: string, kind: StickerKind, emoji = ''): string {
+      const sticker = createSticker(kind, emoji, this.project.theme.accent)
+      this.slide(id).stickers.push(sticker)
+      return sticker.id
+    },
+
+    updateSticker(id: string, stickerId: string, patch: Partial<Omit<Sticker, 'id' | 'kind'>>) {
+      const sticker = this.slide(id).stickers.find((s) => s.id === stickerId)
+      if (sticker) Object.assign(sticker, patch)
+    },
+
+    removeSticker(id: string, stickerId: string) {
+      const slide = this.slide(id)
+      slide.stickers = slide.stickers.filter((s) => s.id !== stickerId)
     },
 
     updateAdjust(id: string, patch: Partial<Adjustments>) {

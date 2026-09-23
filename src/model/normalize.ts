@@ -1,8 +1,8 @@
 import { ASPECTS, MAX_SLIDES } from '../constants'
 import { clamp } from '../render/geometry'
 import { FONT_PAIRS } from '../fonts/catalog'
-import type { BrandKit, Corner, ImageSlot, Logo, Project, Slide, Theme } from '../types'
-import { createSlot, createSlide, defaultLogo, defaultTheme, starterProject } from './factory'
+import type { BrandKit, Corner, ImageSlot, Logo, Project, Slide, Sticker, StickerKind, Theme } from '../types'
+import { createSlot, createSlide, defaultLogo, defaultTheme, starterProject, uid } from './factory'
 import { SLIDE_TYPES } from './slideTypes'
 
 /*
@@ -36,6 +36,21 @@ function normalizeSlide(raw: unknown): Slide | null {
   if (!isObject(raw) || typeof raw.type !== 'string' || !(raw.type in SLIDE_TYPES)) return null
   const slide = createSlide(raw.type as Slide['type'], { title: str(raw.title), body: str(raw.body) })
   slide.alt = str(raw.alt)
+  if (Array.isArray(raw.stickers)) {
+    slide.stickers = raw.stickers.filter(isObject).slice(0, 30).flatMap((s): Sticker[] => {
+      if (!STICKER_KINDS.includes(s.kind as StickerKind)) return []
+      return [{
+        id: typeof s.id === 'string' ? s.id : uid(),
+        kind: s.kind as StickerKind,
+        emoji: str(s.emoji).slice(0, 16),
+        x: num(s.x, 0.5, 0, 1),
+        y: num(s.y, 0.5, 0, 1),
+        size: num(s.size, 0.2, 0.03, 0.9),
+        rotation: num(s.rotation, 0, -180, 180),
+        color: colour(s.color, '#ffffff'),
+      }]
+    })
+  }
   if (Array.isArray(raw.images)) slide.images = raw.images.slice(0, 4).map(normalizeSlot)
   while (slide.images.length < SLIDE_TYPES[slide.type].imageSlots) slide.images.push(createSlot())
   if (isObject(raw.adjust)) {
@@ -80,7 +95,9 @@ function normalizeTheme(raw: unknown, legacyAccent: unknown): Theme {
   }
 }
 
-const CORNERS: Corner[] = ['top-left', 'top-right', 'bottom-left', 'bottom-right']
+const STICKER_KINDS: StickerKind[] = ['emoji', 'arrow', 'circle', 'box', 'star', 'underline']
+
+const CORNERS: Corner[] =['top-left', 'top-right', 'bottom-left', 'bottom-right']
 
 function normalizeLogo(raw: unknown): Logo {
   const d = defaultLogo()

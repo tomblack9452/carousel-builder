@@ -14,6 +14,7 @@ import type { Align, Anchor, ImageSlot, Slide, SlideType } from '../types'
 import IconButton, { type IconName } from './IconButton.vue'
 import SlideAdjustments from './SlideAdjustments.vue'
 import SlideCanvas from './SlideCanvas.vue'
+import StickerControls from './StickerControls.vue'
 
 const ALIGNS: { value: Align; icon: IconName; label: string }[] = [
   { value: 'left', icon: 'alignLeft', label: 'left' },
@@ -24,7 +25,7 @@ const ANCHORS: { value: Anchor }[] = [{ value: 'top' }, { value: 'middle' }, { v
 
 export default defineComponent({
   name: 'SlideCard',
-  components: { IconButton, SlideAdjustments, SlideCanvas },
+  components: { IconButton, SlideAdjustments, SlideCanvas, StickerControls },
   props: {
     slide: { type: Object as PropType<Slide>, required: true },
     index: { type: Number, required: true },
@@ -40,6 +41,7 @@ export default defineComponent({
       /** Which image slot the hidden file input is choosing for. */
       pickingSlot: 0,
       aiBusy: '' as '' | 'title' | 'alt',
+      selectedSticker: null as string | null,
       titleOptions: [] as string[],
     }
   },
@@ -169,7 +171,13 @@ export default defineComponent({
     @dragleave="onDragLeave"
     @drop="onDrop"
   >
-    <SlideCanvas :slide="slide" :index="index" @pick="pickFile" />
+    <SlideCanvas
+      :slide="slide"
+      :index="index"
+      :selected-sticker="selectedSticker"
+      @pick="pickFile"
+      @select="selectedSticker = $event"
+    />
 
     <div class="meta">
       <span
@@ -217,6 +225,13 @@ export default defineComponent({
         <button v-for="t in titleOptions" :key="t" class="option" @click="applyTitle(t)">{{ t }}</button>
       </div>
     </div>
+
+    <StickerControls
+      :slide="slide"
+      :index="index"
+      :selected="selectedSticker"
+      @select="selectedSticker = $event"
+    />
 
     <div class="row text-pos" role="group" :aria-label="`Slide ${index + 1} text position`">
       <IconButton

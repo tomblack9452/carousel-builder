@@ -39,6 +39,7 @@ export function createSlide(type: SlideType, content: Partial<Pick<Slide, 'title
     adjust: neutralAdjustments(),
     text: { ...DEFAULT_TEXT[type] },
     alt: '',
+    stickers: [],
   }
 }
 

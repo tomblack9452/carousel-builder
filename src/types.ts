@@ -37,6 +37,24 @@ export interface Adjustments {
   vignette: number
 }
 
+export type StickerKind = 'emoji' | 'arrow' | 'circle' | 'box' | 'star' | 'underline'
+
+/** A decoration placed on top of a slide. */
+export interface Sticker {
+  id: string
+  kind: StickerKind
+  /** The character, for emoji stickers. */
+  emoji: string
+  /** Centre, as fractions of the slide size. */
+  x: number
+  y: number
+  /** Width as a fraction of the slide width. */
+  size: number
+  /** Degrees clockwise. */
+  rotation: number
+  color: string
+}
+
 export interface Slide {
   id: string
   type: SlideType
@@ -50,6 +68,7 @@ export interface Slide {
   text: TextLayout
   /** Image description for screen readers. */
   alt: string
+  stickers: Sticker[]
 }
 
 export interface Theme {

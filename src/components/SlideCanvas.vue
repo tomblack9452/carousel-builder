@@ -4,9 +4,10 @@ import { mapStores } from 'pinia'
 import { SLIDE_TYPES } from '../model/slideTypes'
 import { renderSlide, slotFrames } from '../render'
 import { clamp, contains } from '../render/geometry'
+import { stickerBox } from '../render/stickers'
 import { TEXT_SAFE } from '../render/text'
 import { useProjectStore } from '../stores/project'
-import type { ImageSlot, Rect, Slide } from '../types'
+import type { ImageSlot, Rect, RenderDoc, Slide, Sticker } from '../types'
 
 const NUDGE_KEYS: Record<string, [number, number]> = {
   ArrowLeft: [-0.05, 0],
@@ -18,14 +19,28 @@ const NUDGE_KEYS: Record<string, [number, number]> = {
 /** Extra grab margin around the text block, in slide pixels. */
 const TEXT_HIT_PAD = 24
 
+/** Dashed selection frame around a sticker, following its rotation. */
+function outlineSticker(ctx: CanvasRenderingContext2D, sticker: Sticker, doc: RenderDoc): void {
+  const b = stickerBox(sticker, doc)
+  ctx.save()
+  ctx.translate(b.x + b.w / 2, b.y + b.h / 2)
+  ctx.rotate((sticker.rotation * Math.PI) / 180)
+  ctx.setLineDash([14, 10])
+  ctx.lineWidth = 4
+  ctx.strokeStyle = '#ffb347'
+  ctx.strokeRect(-b.w / 2 - 10, -b.h / 2 - 10, b.w + 20, b.h + 20)
+  ctx.restore()
+}
+
 interface Drag {
-  /** Dragging the text block, or panning an image slot. */
-  mode: 'text' | 'image'
+  /** Dragging the text block, a sticker, or panning an image slot. */
+  mode: 'text' | 'image' | 'sticker'
   x: number
   y: number
   slot: number
   /** Text block position during a text drag. */
   box?: Rect
+  stickerId?: string
 }
 
 export default defineComponent({
@@ -33,10 +48,14 @@ export default defineComponent({
   props: {
     slide: { type: Object as PropType<Slide>, required: true },
     index: { type: Number, required: true },
+    /** Sticker to outline as selected (editor only, never exported). */
+    selectedSticker: { type: String as PropType<string | null>, default: null },
   },
   emits: {
     /** Ask the parent to open a file picker for an image slot. */
     pick: (slot: number) => slot >= 0,
+    /** A sticker was clicked (its id), or something else was (null). */
+    select: (id: string | null) => id === null || typeof id === 'string',
   },
   data() {
     return {
@@ -75,6 +94,8 @@ export default defineComponent({
       if (canvas.width !== doc.width) canvas.width = doc.width
       if (canvas.height !== doc.height) canvas.height = doc.height
       this.textBox = renderSlide(ctx, this.slide, doc)
+      const selected = this.slide.stickers.find((s) => s.id === this.selectedSticker)
+      if (selected) outlineSticker(ctx, selected, doc)
     })
   },
   unmounted() {
@@ -99,9 +120,27 @@ export default defineComponent({
       const p = TEXT_HIT_PAD
       return contains({ x: b.x - p, y: b.y - p, w: b.w + p * 2, h: b.h + p * 2 }, x, y)
     },
+    /** Topmost sticker under a point, if any. */
+    stickerAt(x: number, y: number): string | null {
+      const doc = this.projectStore.doc
+      for (let i = this.slide.stickers.length - 1; i >= 0; i--) {
+        const s = this.slide.stickers[i]
+        const b = stickerBox(s, doc)
+        const pad = 12
+        if (contains({ x: b.x - pad, y: b.y - pad, w: b.w + pad * 2, h: b.h + pad * 2 }, x, y)) return s.id
+      }
+      return null
+    },
     onPointerDown(event: PointerEvent) {
       const { x, y } = this.toSlide(event)
       const canvas = event.currentTarget as HTMLCanvasElement
+      const stickerId = this.stickerAt(x, y)
+      this.$emit('select', stickerId)
+      if (stickerId) {
+        this.drag = { mode: 'sticker', x: event.clientX, y: event.clientY, slot: 0, stickerId }
+        canvas.setPointerCapture(event.pointerId)
+        return
+      }
       if (this.textBox && this.hitsText(x, y)) {
         this.drag = { mode: 'text', x: event.clientX, y: event.clientY, slot: 0, box: { ...this.textBox } }
         canvas.setPointerCapture(event.pointerId)
@@ -119,13 +158,20 @@ export default defineComponent({
     onPointerMove(event: PointerEvent) {
       const { x, y, k } = this.toSlide(event)
       if (!this.drag) {
-        this.overText = this.hitsText(x, y)
+        this.overText = this.hitsText(x, y) || !!this.stickerAt(x, y)
         return
       }
       const dx = (event.clientX - this.drag.x) * k
       const dy = (event.clientY - this.drag.y) * k
       this.drag = { ...this.drag, x: event.clientX, y: event.clientY }
-      if (this.drag.box) this.drag.box = this.shiftText(this.drag.box, dx, dy)
+      const { width, height } = this.projectStore.doc
+      const sticker = this.slide.stickers.find((s) => s.id === this.drag?.stickerId)
+      if (sticker) {
+        this.projectStore.updateSticker(this.slide.id, sticker.id, {
+          x: clamp(sticker.x + dx / width, 0, 1),
+          y: clamp(sticker.y + dy / height, 0, 1),
+        })
+      } else if (this.drag.box) this.drag.box = this.shiftText(this.drag.box, dx, dy)
       else this.projectStore.panBy(this.slide.id, this.drag.slot, dx, dy)
     },
     /** Move a text box by slide pixels, kept inside the safe area, and store the result. */
@@ -143,6 +189,14 @@ export default defineComponent({
       this.drag = null
     },
     onKeydown(event: KeyboardEvent) {
+      // With a sticker selected, Delete removes the sticker rather than the slide.
+      if (this.selectedSticker && (event.key === 'Delete' || event.key === 'Backspace')) {
+        event.preventDefault()
+        event.stopPropagation()
+        this.projectStore.removeSticker(this.slide.id, this.selectedSticker)
+        this.$emit('select', null)
+        return
+      }
       // Shift+arrows move the text; plain arrows pan the image.
       const step = NUDGE_KEYS[event.key]
       if (step && event.shiftKey) {
