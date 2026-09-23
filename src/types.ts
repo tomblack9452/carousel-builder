@@ -1,6 +1,6 @@
 import type { AspectId } from './constants'
 
-export type SlideType = 'cover' | 'image' | 'text' | 'quote' | 'list' | 'compare' | 'cta'
+export type SlideType = 'cover' | 'image' | 'panorama' | 'text' | 'quote' | 'list' | 'compare' | 'cta'
 
 export interface ImageSlot {
   /** Asset id in the asset store, or null when empty. */

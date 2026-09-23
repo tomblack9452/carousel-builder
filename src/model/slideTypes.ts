@@ -34,6 +34,13 @@ export const SLIDE_TYPES: Record<SlideType, SlideTypeInfo> = {
     title: { label: 'Title', placeholder: 'Title' },
     body: { label: 'Subtitle', placeholder: 'Subtitle' },
   },
+  panorama: {
+    label: 'Panorama',
+    imageSlots: 1,
+    title: { label: 'Title', placeholder: 'Title (optional)' },
+    body: { label: 'Subtitle', placeholder: 'Subtitle (optional)' },
+    imageHint: 'Panorama slides next to each other share one wide image, split across the swipe.',
+  },
   text: {
     label: 'Text',
     imageSlots: 1,

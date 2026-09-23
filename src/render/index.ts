@@ -5,6 +5,7 @@ import { drawCover } from './slides/cover'
 import { drawCta } from './slides/cta'
 import { drawImage } from './slides/image'
 import { drawList } from './slides/list'
+import { drawPanorama, panoramaFrames } from './slides/panorama'
 import { drawQuote } from './slides/quote'
 import { drawText } from './slides/text'
 
@@ -12,13 +13,14 @@ export interface SlideRenderer {
   /** Returns the bounds of the movable text block, if any was drawn. */
   draw: (ctx: Ctx, slide: Slide, doc: RenderDoc) => Rect | null
   /** Where each image slot sits on the slide. Defaults to one full-bleed frame. */
-  frames?: (w: number, h: number) => Rect[]
+  frames?: (w: number, h: number, slide: Slide, doc: RenderDoc) => Rect[]
 }
 
 /** One renderer per slide type. Add a new slide type by adding an entry here. */
 const renderers: Record<SlideType, SlideRenderer> = {
   cover: { draw: drawCover },
   image: { draw: drawImage },
+  panorama: { draw: drawPanorama, frames: panoramaFrames },
   text: { draw: drawText },
   quote: { draw: drawQuote },
   list: { draw: drawList },
@@ -26,8 +28,9 @@ const renderers: Record<SlideType, SlideRenderer> = {
   cta: { draw: drawCta },
 }
 
-export function slotFrames(slide: Slide, w: number, h: number): Rect[] {
-  return renderers[slide.type].frames?.(w, h) ?? [{ x: 0, y: 0, w, h }]
+export function slotFrames(slide: Slide, doc: RenderDoc): Rect[] {
+  const { width: w, height: h } = doc
+  return renderers[slide.type].frames?.(w, h, slide, doc) ?? [{ x: 0, y: 0, w, h }]
 }
 
 /** Draw a slide. Returns the text block's bounds so the editor can let you drag it. */

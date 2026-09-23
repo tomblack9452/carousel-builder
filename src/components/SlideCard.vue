@@ -54,8 +54,7 @@ export default defineComponent({
       return this.slots.length > 0
     },
     lowResWarning(): string {
-      const { width, height } = this.projectStore.doc
-      const frames = slotFrames(this.slide, width, height)
+      const frames = slotFrames(this.slide, this.projectStore.doc)
       for (const [i, slot] of this.slots.entries()) {
         const img = slot.asset ? this.assetsStore.images[slot.asset] : undefined
         if (img && fitImage(img, slot.zoom, frames[i].w, frames[i].h).scale > LOW_RES_SCALE) {

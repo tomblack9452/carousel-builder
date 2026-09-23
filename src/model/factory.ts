@@ -21,6 +21,7 @@ export function neutralAdjustments(): Adjustments {
 const SAMPLE_CONTENT: Record<SlideType, Pick<Slide, 'title' | 'body'>> = {
   cover: { title: 'Your title\ngoes here', body: '' },
   image: { title: '', body: '' },
+  panorama: { title: '', body: '' },
   text: { title: 'Heading', body: 'Write a short paragraph here.' },
   quote: { title: 'Say something worth remembering', body: 'Someone' },
   list: { title: 'Top tips', body: 'First thing\nSecond thing\nThird thing' },

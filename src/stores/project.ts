@@ -7,6 +7,7 @@ import {
   blankProject, changeSlideType, cloneSlide, createSampleSlide, createSlide, neutralAdjustments, starterProject,
 } from '../model/factory'
 import { normalizeProject, projectAssetIds } from '../model/normalize'
+import { panoramaRun, syncPanoramas } from '../model/panorama'
 import { SLIDE_TYPES } from '../model/slideTypes'
 import { db } from '../persist/db'
 import { readProjectFile, writeProjectFile } from '../persist/projectFile'
@@ -148,6 +149,7 @@ export const useProjectStore = defineStore('project', {
       try {
         const asset = await useAssetStore().add(file)
         Object.assign(this.slide(slideId).images[slotIndex], { asset, zoom: 1, px: 0, py: 0 })
+        this.linkSlot(slideId, slotIndex)
       } catch {
         this.status = `${file.name} couldn't be read as an image. Save it as JPG or PNG and try again.`
       }
@@ -186,17 +188,20 @@ export const useProjectStore = defineStore('project', {
     addSlide(type: SlideType) {
       if (!this.canAdd) return
       this.insertSlide(createSampleSlide(type), this.endOfContent)
+      syncPanoramas(this.project.slides)
     },
 
     duplicateSlide(id: string) {
       if (!this.canAdd) return
       const index = this.indexOf(id)
       this.insertSlide(cloneSlide(this.project.slides[index]), index + 1)
+      syncPanoramas(this.project.slides)
     },
 
     removeSlide(id: string) {
       if (this.project.slides.length <= 1) return
       this.project.slides.splice(this.indexOf(id), 1)
+      syncPanoramas(this.project.slides)
     },
 
     /** Move a slide so it lands before the slide currently at `toIndex` (length = end). */
@@ -205,6 +210,7 @@ export const useProjectStore = defineStore('project', {
       const [slide] = this.project.slides.splice(from, 1)
       const to = clamp(toIndex > from ? toIndex - 1 : toIndex, 0, this.project.slides.length)
       this.project.slides.splice(to, 0, slide)
+      syncPanoramas(this.project.slides)
     },
 
     indexOf(id: string): number {
@@ -219,10 +225,22 @@ export const useProjectStore = defineStore('project', {
 
     changeType(id: string, type: SlideType) {
       changeSlideType(this.slide(id), type)
+      syncPanoramas(this.project.slides)
     },
 
     updateSlot(id: string, slotIndex: number, patch: Partial<ImageSlot>) {
       Object.assign(this.slide(id).images[slotIndex], patch)
+      this.linkSlot(id, slotIndex)
+    },
+
+    /** Panorama slides share one image: copy a changed slot to the rest of the run. */
+    linkSlot(id: string, slotIndex: number) {
+      const index = this.indexOf(id)
+      const slides = this.project.slides
+      if (slides[index].type !== 'panorama' || slotIndex !== 0) return
+      const { start, count } = panoramaRun(slides, index)
+      const source = slides[index].images[0]
+      for (let i = start; i < start + count; i++) if (i !== index) Object.assign(slides[i].images[0], source)
     },
 
     updateAdjust(id: string, patch: Partial<Adjustments>) {
@@ -255,10 +273,11 @@ export const useProjectStore = defineStore('project', {
       const slot = slide.images[slotIndex]
       const img = slot.asset ? useAssetStore().images[slot.asset] : undefined
       if (!img) return
-      const frame = slotFrames(slide, this.doc.width, this.doc.height)[slotIndex]
+      const frame = slotFrames(slide, this.doc)[slotIndex]
       const { marginX, marginY } = fitImage(img, slot.zoom, frame.w, frame.h)
       if (marginX > 0) slot.px = clamp(slot.px + dx / marginX, -1, 1)
       if (marginY > 0) slot.py = clamp(slot.py + dy / marginY, -1, 1)
+      this.linkSlot(id, slotIndex)
     },
 
     /** Pan by a fraction of the pan range (e.g. from arrow keys). */
@@ -266,6 +285,7 @@ export const useProjectStore = defineStore('project', {
       const slot = this.slide(id).images[slotIndex]
       slot.px = clamp(slot.px + dx, -1, 1)
       slot.py = clamp(slot.py + dy, -1, 1)
+      this.linkSlot(id, slotIndex)
     },
 
     async downloadSlide(id: string) {

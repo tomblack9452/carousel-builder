@@ -89,7 +89,7 @@ export default defineComponent({
       return { x: (event.clientX - rect.left) * k, y: (event.clientY - rect.top) * k, k }
     },
     slotAt(x: number, y: number): number {
-      const frames = slotFrames(this.slide, this.projectStore.doc.width, this.projectStore.doc.height)
+      const frames = slotFrames(this.slide, this.projectStore.doc)
       const hit = frames.findIndex((f, i) => i < this.slots.length && contains(f, x, y))
       return Math.max(0, hit)
     },
