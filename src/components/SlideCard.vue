@@ -133,6 +133,7 @@ export default defineComponent({
 <template>
   <div
     class="card"
+    :data-slide-id="slide.id"
     :class="{ over: dragOver, 'drop-before': dropSide === 'before', 'drop-after': dropSide === 'after' }"
     @dragover="onDragOver"
     @dragleave="onDragLeave"
@@ -268,6 +269,7 @@ export default defineComponent({
   padding: 12px;
 }
 .card { position: relative; }
+.card:focus-within { border-color: var(--muted); }
 .card.over { border-color: var(--amber); }
 /* Insertion marker when reordering. */
 .card.drop-before::before, .card.drop-after::after {
