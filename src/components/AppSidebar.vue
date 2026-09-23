@@ -24,14 +24,22 @@ export default defineComponent({
 <template>
   <aside>
     <h1 class="title">
-      
-      <span><span class="title-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" role="img" aria-label="Instagram logo">
-          <rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="1.8"/>
-          <circle cx="12" cy="12" r="4.1" fill="none" stroke="currentColor" stroke-width="1.8"/>
-          <circle cx="17.2" cy="6.8" r="1.3" fill="currentColor"/>
-        </svg>
-      </span>Instagram Carousel Builder</span>
+      <svg class="title-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <defs>
+          <linearGradient id="ig-gradient" gradientUnits="userSpaceOnUse" x1="19" y1="1" x2="5" y2="23">
+            <stop offset="0" stop-color="#7638fa" />
+            <stop offset="0.3" stop-color="#d300c5" />
+            <stop offset="0.55" stop-color="#ff0069" />
+            <stop offset="0.8" stop-color="#ff7a00" />
+            <stop offset="1" stop-color="#ffd600" />
+          </linearGradient>
+        </defs>
+        <g fill="none" stroke="url(#ig-gradient)" stroke-width="2.3">
+          <rect x="2.4" y="2.4" width="19.2" height="19.2" rx="5.6" />
+          <circle cx="12" cy="12" r="4.5" />
+        </g>
+        <circle cx="17.3" cy="6.7" r="1.4" fill="url(#ig-gradient)" />
+      </svg>Instagram Carousel Builder
     </h1>
     <p class="intro">
       Drop an image on each slide, drag it to reposition, then download. Every slide exports as a 1080×1350 JPG.
@@ -68,28 +76,19 @@ aside {
   background: var(--panel);
 }
 .title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
   font-family: Anton, Impact, sans-serif;
   font-weight: 400;
   font-size: 34px;
   line-height: 1.05;
   margin: 0 0 8px;
 }
+/* Sits in the first text line at the full line height. */
 .title-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  color: #111827;
-  flex-shrink: 0;
-}
-.title-icon svg {
-  width: 100%;
-  height: 100%;
-  display: block;
+  display: inline-block;
+  width: 1.05em;
+  height: 1.05em;
+  vertical-align: top;
+  margin-right: 0.22em;
 }
 .intro { color: var(--muted); margin: 0 0 10px; }
 .stack { display: grid; gap: 10px; margin-top: 22px; }
