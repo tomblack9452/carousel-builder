@@ -224,6 +224,10 @@ export const useProjectStore = defineStore('project', {
       const images = files
         .filter((f) => f.type.startsWith('image/'))
         .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
+      if (!images.length) {
+        this.status = files.length ? 'None of those files were images. Choose JPG, PNG or WebP files.' : ''
+        return
+      }
       const targets = this.project.slides.filter((s) => s.type === 'image')
       while (targets.length < images.length && this.canAdd) {
         targets.push(this.insertSlide(createSlide('image'), this.endOfContent))
@@ -408,7 +412,9 @@ export const useProjectStore = defineStore('project', {
         }
         return
       }
-      downloadBlob(await renderToBlob(slide, this.doc), slideFileName(slide, index, this.project.export.format))
+      const name = slideFileName(slide, index, this.project.export.format)
+      downloadBlob(await renderToBlob(slide, this.doc), name)
+      this.status = `Downloaded ${name}.`
     },
 
     async downloadPdf() {
