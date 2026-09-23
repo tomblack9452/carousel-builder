@@ -5,6 +5,7 @@ import { drawStickers } from './stickers'
 import { compareFrames, drawCompare } from './slides/compare'
 import { drawCover } from './slides/cover'
 import { drawCta } from './slides/cta'
+import { drawGrid, grid2Frames, grid3Frames, grid4Frames } from './slides/grid'
 import { drawImage } from './slides/image'
 import { drawList } from './slides/list'
 import { drawPanorama, panoramaFrames } from './slides/panorama'
@@ -23,6 +24,9 @@ const renderers: Record<SlideType, SlideRenderer> = {
   cover: { draw: drawCover },
   image: { draw: drawImage },
   panorama: { draw: drawPanorama, frames: panoramaFrames },
+  grid2: { draw: drawGrid, frames: grid2Frames },
+  grid3: { draw: drawGrid, frames: grid3Frames },
+  grid4: { draw: drawGrid, frames: grid4Frames },
   text: { draw: drawText },
   quote: { draw: drawQuote },
   list: { draw: drawList },
