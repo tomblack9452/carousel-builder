@@ -45,6 +45,21 @@ export async function zipSlides(doc: RenderDoc): Promise<Blob> {
   return zip.generateAsync({ type: 'blob' })
 }
 
+/** A slide as a small base64 JPEG (no data: prefix), e.g. to send for alt text. */
+export function slideThumbnailBase64(slide: Slide, doc: RenderDoc, width = 768): string {
+  const full = document.createElement('canvas')
+  full.width = doc.width
+  full.height = doc.height
+  const ctx = full.getContext('2d')
+  if (!ctx) throw new Error('Canvas 2D is not available')
+  renderSlide(ctx, slide, doc)
+  const small = document.createElement('canvas')
+  small.width = width
+  small.height = Math.round((doc.height / doc.width) * width)
+  small.getContext('2d')?.drawImage(full, 0, 0, small.width, small.height)
+  return small.toDataURL('image/jpeg', 0.85).split(',')[1]
+}
+
 /** "01-cover.jpg: description" per slide that has alt text, for pasting into Instagram. */
 export function altTextList(doc: RenderDoc): string {
   return doc.project.slides

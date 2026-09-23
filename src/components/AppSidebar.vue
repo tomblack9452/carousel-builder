@@ -2,6 +2,7 @@
 import { defineComponent } from 'vue'
 import { mapStores } from 'pinia'
 import { useProjectStore } from '../stores/project'
+import AiPanel from './sidebar/AiPanel.vue'
 import BrandPanel from './sidebar/BrandPanel.vue'
 import CaptionPanel from './sidebar/CaptionPanel.vue'
 import ExportPanel from './sidebar/ExportPanel.vue'
@@ -11,7 +12,7 @@ import TemplatesPanel from './sidebar/TemplatesPanel.vue'
 
 export default defineComponent({
   name: 'AppSidebar',
-  components: { BrandPanel, CaptionPanel, ExportPanel, ProjectPanel, StylePanel, TemplatesPanel },
+  components: { AiPanel, BrandPanel, CaptionPanel, ExportPanel, ProjectPanel, StylePanel, TemplatesPanel },
   computed: {
     ...mapStores(useProjectStore),
   },
@@ -48,6 +49,7 @@ export default defineComponent({
     <StylePanel />
     <BrandPanel />
     <CaptionPanel />
+    <AiPanel />
     <ExportPanel />
   </aside>
 </template>

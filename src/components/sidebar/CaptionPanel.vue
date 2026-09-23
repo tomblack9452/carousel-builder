@@ -1,7 +1,9 @@
 <script lang="ts">
 import { defineComponent } from 'vue'
 import { mapStores } from 'pinia'
+import { describeError, suggestCaption } from '../../ai/claude'
 import { CAPTION_MAX, HASHTAG_MAX } from '../../constants'
+import { useAiStore } from '../../stores/ai'
 import { useProjectStore } from '../../stores/project'
 import SidebarSection from './SidebarSection.vue'
 
@@ -9,10 +11,10 @@ export default defineComponent({
   name: 'CaptionPanel',
   components: { SidebarSection },
   data() {
-    return { CAPTION_MAX, HASHTAG_MAX, copied: false }
+    return { CAPTION_MAX, HASHTAG_MAX, copied: false, writing: false }
   },
   computed: {
-    ...mapStores(useProjectStore),
+    ...mapStores(useProjectStore, useAiStore),
     length(): number {
       return [...this.projectStore.project.caption].length
     },
@@ -21,6 +23,17 @@ export default defineComponent({
     },
   },
   methods: {
+    async writeWithAi() {
+      this.writing = true
+      try {
+        this.projectStore.project.caption = await suggestCaption(this.projectStore.project)
+        this.projectStore.status = 'Caption written. Edit it however you like (Ctrl+Z undoes it).'
+      } catch (err) {
+        this.projectStore.status = describeError(err)
+      } finally {
+        this.writing = false
+      }
+    },
     async copy() {
       try {
         await navigator.clipboard.writeText(this.projectStore.project.caption)
@@ -42,9 +55,14 @@ export default defineComponent({
       <span :class="{ over: length > CAPTION_MAX }">{{ length }} / {{ CAPTION_MAX }} characters</span>
       <span :class="{ over: hashtags > HASHTAG_MAX }">{{ hashtags }} / {{ HASHTAG_MAX }} hashtags</span>
     </p>
-    <button class="btn copy" :disabled="!projectStore.project.caption" @click="copy">
-      {{ copied ? 'Copied' : 'Copy caption' }}
-    </button>
+    <div class="row">
+      <button v-if="aiStore.hasKey" class="btn" :disabled="writing" @click="writeWithAi">
+        {{ writing ? 'Writing…' : projectStore.project.caption.trim() ? 'Improve with AI' : 'Write with AI' }}
+      </button>
+      <button class="btn" :disabled="!projectStore.project.caption" @click="copy">
+        {{ copied ? 'Copied' : 'Copy caption' }}
+      </button>
+    </div>
     <p class="hint">Also saved as caption.txt in the zip when you download all slides.</p>
   </SidebarSection>
 </template>
@@ -52,6 +70,5 @@ export default defineComponent({
 <style scoped>
 .counts { display: flex; justify-content: space-between; margin: 6px 0 8px; font-size: 13px; color: var(--muted); }
 .over { color: var(--amber); font-weight: 600; }
-.copy { width: 100%; }
-.copy:disabled { opacity: 0.5; cursor: default; }
+.btn:disabled { opacity: 0.5; cursor: default; }
 </style>

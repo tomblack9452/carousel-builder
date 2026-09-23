@@ -10,9 +10,11 @@
     "typecheck": "vue-tsc"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.128.0",
     "jszip": "^3.10.2",
     "pinia": "^4.0.3",
-    "vue": "^3.5.43"
+    "vue": "^3.5.43",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.9",

@@ -1,7 +1,10 @@
 <script lang="ts">
 import { defineComponent, type PropType } from 'vue'
 import { mapStores } from 'pinia'
+import { describeError, suggestAltText, suggestTitles } from '../ai/claude'
 import { LOW_RES_SCALE, SLIDE_DRAG_TYPE } from '../constants'
+import { slideThumbnailBase64 } from '../export/files'
+import { useAiStore } from '../stores/ai'
 import { SLIDE_TYPE_ORDER, SLIDE_TYPES, type SlideTypeInfo } from '../model/slideTypes'
 import { slotFrames } from '../render'
 import { fitImage } from '../render/geometry'
@@ -36,10 +39,12 @@ export default defineComponent({
       dropSide: null as 'before' | 'after' | null,
       /** Which image slot the hidden file input is choosing for. */
       pickingSlot: 0,
+      aiBusy: '' as '' | 'title' | 'alt',
+      titleOptions: [] as string[],
     }
   },
   computed: {
-    ...mapStores(useProjectStore, useAssetStore),
+    ...mapStores(useProjectStore, useAssetStore, useAiStore),
     info(): SlideTypeInfo {
       return SLIDE_TYPES[this.slide.type]
     },
@@ -117,6 +122,31 @@ export default defineComponent({
       const empty = this.slots.findIndex((s) => !s.asset)
       this.projectStore.setImage(this.slide.id, Math.max(0, empty), file)
     },
+    async suggestTitles() {
+      this.aiBusy = 'title'
+      try {
+        this.titleOptions = await suggestTitles(this.projectStore.project, this.slide)
+      } catch (err) {
+        this.projectStore.status = describeError(err)
+      } finally {
+        this.aiBusy = ''
+      }
+    },
+    applyTitle(title: string) {
+      this.projectStore.updateSlide(this.slide.id, { title })
+      this.titleOptions = []
+    },
+    async suggestAlt() {
+      this.aiBusy = 'alt'
+      try {
+        const jpeg = slideThumbnailBase64(this.slide, this.projectStore.doc)
+        this.projectStore.updateSlide(this.slide.id, { alt: await suggestAltText(jpeg) })
+      } catch (err) {
+        this.projectStore.status = describeError(err)
+      } finally {
+        this.aiBusy = ''
+      }
+    },
     onType(event: Event) {
       this.projectStore.changeType(this.slide.id, (event.target as HTMLSelectElement).value as SlideType)
     },
@@ -179,6 +209,15 @@ export default defineComponent({
       </template>
     </template>
 
+    <div v-if="aiStore.hasKey && info.title" class="suggest">
+      <button class="link" :disabled="aiBusy === 'title'" @click="suggestTitles">
+        {{ aiBusy === 'title' ? 'Thinking…' : `Suggest ${info.title.label.toLowerCase()}s` }}
+      </button>
+      <div v-if="titleOptions.length" class="options">
+        <button v-for="t in titleOptions" :key="t" class="option" @click="applyTitle(t)">{{ t }}</button>
+      </div>
+    </div>
+
     <div class="row text-pos" role="group" :aria-label="`Slide ${index + 1} text position`">
       <IconButton
         v-for="a in ALIGNS"
@@ -229,6 +268,9 @@ export default defineComponent({
         :aria-label="`Slide ${index + 1} alt text`"
         @input="onText('alt', $event)"
       />
+      <button v-if="aiStore.hasKey" class="link" :disabled="aiBusy === 'alt'" @click="suggestAlt">
+        {{ aiBusy === 'alt' ? 'Looking at the slide…' : 'Suggest alt text' }}
+      </button>
     </details>
 
     <div class="row actions">
@@ -300,6 +342,29 @@ export default defineComponent({
   stroke-linecap: round;
 }
 .actions { margin-top: 10px; }
+.link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--amber);
+  font: 600 13px Barlow, sans-serif;
+  cursor: pointer;
+}
+.link:disabled { color: var(--muted); cursor: default; }
+.suggest { margin: 0 0 8px; }
+.options { display: grid; gap: 4px; margin-top: 6px; }
+.option {
+  text-align: left;
+  white-space: pre-line;
+  padding: 6px 8px;
+  border: 1px dashed var(--line);
+  border-radius: 6px;
+  background: var(--dusk);
+  color: var(--text);
+  font: 14px Barlow, sans-serif;
+  cursor: pointer;
+}
+.option:hover { border-color: var(--amber); }
 .alt { margin-top: 8px; }
 .alt summary { cursor: pointer; font-weight: 600; font-size: 14px; color: var(--muted); }
 .alt textarea { margin-top: 6px; }
