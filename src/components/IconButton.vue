@@ -15,6 +15,8 @@ const ICONS = {
   middle: 'M4 12h16M12 3v5M9 5l3 3 3-3M12 21v-5M9 19l3-3 3 3',
   bottom: 'M4 20h16M12 4v11M8 11l4 4 4-4',
   redo: 'M15 14l5-5-5-5M20 9H10a6 6 0 0 0 0 12h3',
+  download: 'M12 4v11M7 10l5 5 5-5M5 20h14',
+  keyboard: 'M3 6h18v12H3zM7 10h.01M11 10h.01M15 10h.01M8 14h8',
 } as const
 
 export type IconName = keyof typeof ICONS
@@ -55,25 +57,26 @@ export default defineComponent({
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   padding: 0;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: var(--dusk);
-  color: var(--text);
+  border: 0;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--text-2);
   cursor: pointer;
   flex: none;
+  transition: background-color 0.1s, color 0.1s;
 }
-.icon-btn:hover:not(:disabled) { border-color: var(--muted); }
+.icon-btn:hover:not(:disabled) { background: var(--hover); color: var(--text); }
 .icon-btn:disabled { opacity: 0.35; cursor: default; }
-.icon-btn.active { border-color: var(--amber); color: var(--amber); }
+.icon-btn.active { background: var(--accent-soft); color: var(--accent-text); }
 svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   fill: none;
   stroke: currentColor;
-  stroke-width: 2;
+  stroke-width: 1.7;
   stroke-linecap: round;
   stroke-linejoin: round;
 }

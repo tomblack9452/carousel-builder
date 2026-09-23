@@ -32,9 +32,10 @@ export default defineComponent({
   <SidebarSection title="Templates" :default-open="false">
     <ul class="list">
       <li v-for="t in templatesStore.all" :key="t.id">
-        <span class="name">{{ t.name }}<small v-if="t.builtIn"> · starter</small></span>
-        <button class="btn" @click="use(t.id, t.name)">Use</button>
-        <IconButton v-if="!t.builtIn" icon="trash" :label="`Delete ${t.name}`" @click="remove(t.id, t.name)" />
+        <span class="name">{{ t.name }}</span>
+        <small v-if="t.builtIn" class="tag">Starter</small>
+        <IconButton v-else icon="trash" :label="`Delete ${t.name}`" @click="remove(t.id, t.name)" />
+        <button class="btn use" @click="use(t.id, t.name)">Use</button>
       </li>
     </ul>
     <button class="btn wide" @click="save">Save this project as a template</button>
@@ -43,10 +44,11 @@ export default defineComponent({
 </template>
 
 <style scoped>
-.list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; }
-.list li { display: flex; align-items: center; gap: 6px; }
-.name { flex: 1; font-weight: 600; }
-.name small { color: var(--muted); font-weight: 400; }
-.list .btn { padding: 5px 12px; }
+.list { list-style: none; margin: 0 -8px; padding: 0; }
+.list li { display: flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 8px; border-radius: var(--radius); }
+.list li:hover { background: var(--hover); }
+.name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tag { font-size: 11px; color: var(--text-3); }
+.use { height: 24px; padding: 0 10px; font-size: 12px; }
 .wide { width: 100%; margin-top: 10px; }
 </style>

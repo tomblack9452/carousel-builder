@@ -85,10 +85,14 @@ export default defineComponent({
 <template>
   <dialog ref="dialog" class="preview" aria-label="Phone preview" @click="onBackdrop">
     <div class="shell">
-      <div class="tabs" role="tablist">
-        <button role="tab" :aria-selected="tab === 'feed'" :class="{ on: tab === 'feed' }" @click="tab = 'feed'">Feed post</button>
-        <button role="tab" :aria-selected="tab === 'grid'" :class="{ on: tab === 'grid' }" @click="tab = 'grid'">Profile grid</button>
-        <button class="close" aria-label="Close preview" @click="close">✕</button>
+      <div class="bar">
+        <div class="segmented tabs" role="tablist">
+          <button role="tab" :aria-selected="tab === 'feed'" :aria-pressed="tab === 'feed'" @click="tab = 'feed'">Feed post</button>
+          <button role="tab" :aria-selected="tab === 'grid'" :aria-pressed="tab === 'grid'" @click="tab = 'grid'">Profile grid</button>
+        </div>
+        <button class="close" aria-label="Close preview" @click="close">
+          <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" /></svg>
+        </button>
       </div>
 
       <div class="phone">
@@ -109,10 +113,15 @@ export default defineComponent({
             <button v-if="current < images.length - 1" class="nav next" aria-label="Next slide" @click="go(1)">›</button>
           </div>
           <div class="actions" aria-hidden="true">
-            <span>♡</span><span>💬</span><span>➤</span>
+            <span class="icons">
+              <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" /></svg>
+              <svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-3.2-6.4A8 8 0 0 1 20 12zM20 12l1 7-5-2" /></svg>
+              <svg viewBox="0 0 24 24"><path d="M21 3L10 14M21 3l-7 18-4-7-7-4z" /></svg>
+            </span>
             <span class="dots">
               <i v-for="(_, i) in images" :key="i" :class="{ on: i === current }" />
             </span>
+            <svg class="save" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-5-6 5z" /></svg>
           </div>
           <p v-if="caption" class="caption" :class="{ clamp: !expanded }">
             <strong>{{ handle }}</strong> {{ caption }}
@@ -140,33 +149,42 @@ export default defineComponent({
   background: transparent;
   color: var(--text);
   max-height: 100vh;
+  overflow: visible;
 }
-.preview::backdrop { background: rgba(10, 8, 18, 0.75); }
+.preview::backdrop { background: var(--backdrop); }
 .shell { display: grid; gap: 10px; padding: 12px; }
-.tabs { display: flex; gap: 6px; }
-.tabs button {
-  border: 1px solid var(--line);
+.bar { display: flex; gap: 8px; }
+.tabs { flex: 1; background: var(--panel); box-shadow: var(--shadow-pop); }
+.tabs button[aria-pressed="true"] { background: var(--field); box-shadow: none; }
+.close {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: var(--radius);
   background: var(--panel);
-  color: var(--muted);
-  border-radius: 999px;
-  padding: 6px 14px;
-  font: 600 14px Barlow, sans-serif;
+  color: var(--text);
+  box-shadow: var(--shadow-pop);
   cursor: pointer;
 }
-.tabs button.on { color: var(--text); border-color: var(--amber); }
-.tabs .close { margin-left: auto; }
+.close:hover { background: var(--field); }
+.close svg { width: 11px; height: 11px; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
 
+/* The phone mimics Instagram's own dark UI, so it keeps fixed colours. */
 .phone {
   width: min(375px, calc(100vw - 24px));
   max-height: calc(100vh - 90px);
   overflow: auto;
   background: #000;
   color: #f5f5f5;
-  border-radius: 28px;
-  border: 8px solid #1a1a1a;
-  font: 14px/1.35 system-ui, sans-serif;
+  border-radius: 34px;
+  border: 9px solid #1a1a1a;
+  box-shadow: 0 0 0 1px #3a3a3a, var(--shadow-pop);
+  font: 14px/1.35 -apple-system, "Segoe UI", system-ui, sans-serif;
+  scrollbar-width: none;
 }
-.post-head, .grid-head { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
+.post-head, .grid-head { display: flex; align-items: center; gap: 10px; padding: 12px 12px 10px; font-size: 13px; }
 .avatar {
   display: grid;
   place-items: center;
@@ -174,7 +192,8 @@ export default defineComponent({
   height: 32px;
   border-radius: 50%;
   overflow: hidden;
-  background: linear-gradient(45deg, #ffd600, #ff0069, #7638fa);
+  background: #262626;
+  box-shadow: 0 0 0 1.5px #000, 0 0 0 3px #d62976;
   font-weight: 700;
 }
 .avatar img { width: 100%; height: 100%; object-fit: contain; background: #fff; }
@@ -190,40 +209,44 @@ export default defineComponent({
 .track img { flex: 0 0 100%; width: 100%; height: 100%; object-fit: cover; scroll-snap-align: start; }
 .counter {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  padding: 2px 8px;
+  top: 12px;
+  right: 12px;
+  padding: 3px 8px;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(18, 18, 18, 0.7);
   font-size: 12px;
+  font-variant-numeric: tabular-nums;
 }
 .nav {
   position: absolute;
   top: 50%;
   translate: 0 -50%;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border: 0;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.82);
   color: #000;
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1;
   cursor: pointer;
 }
-.prev { left: 8px; }
-.next { right: 8px; }
+.prev { left: 10px; }
+.next { right: 10px; }
 
-.actions { display: flex; align-items: center; gap: 14px; padding: 8px 12px 4px; font-size: 20px; }
-.dots { display: flex; gap: 4px; margin: 0 auto; transform: translateX(-40px); }
-.dots i { width: 6px; height: 6px; border-radius: 50%; background: #555; }
+.actions { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 10px 12px 6px; }
+.actions svg { width: 24px; height: 24px; fill: none; stroke: #f5f5f5; stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; }
+.icons { display: flex; gap: 14px; }
+.save { justify-self: end; }
+.dots { display: flex; gap: 4px; }
+.dots i { width: 6px; height: 6px; border-radius: 50%; background: #555; transition: background-color 0.15s; }
 .dots i.on { background: #0095f6; }
 .caption { margin: 4px 12px 0; white-space: pre-wrap; word-break: break-word; }
 .caption.clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.more { margin: 0 12px 12px; padding: 0; border: 0; background: none; color: #a8a8a8; cursor: pointer; }
+.more { margin: 0 12px 14px; padding: 0; border: 0; background: none; color: #a8a8a8; font: inherit; cursor: pointer; }
 
 .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
 .tile { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; display: block; }
 .filler { background: #262626; }
-.note { margin: 10px 12px 14px; color: #a8a8a8; font-size: 12px; }
+.note { margin: 12px 12px 16px; color: #a8a8a8; font-size: 12px; }
 </style>

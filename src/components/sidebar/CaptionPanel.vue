@@ -68,7 +68,6 @@ export default defineComponent({
 </template>
 
 <style scoped>
-.counts { display: flex; justify-content: space-between; margin: 6px 0 8px; font-size: 13px; color: var(--muted); }
-.over { color: var(--amber); font-weight: 600; }
-.btn:disabled { opacity: 0.5; cursor: default; }
+.counts { display: flex; justify-content: space-between; margin: 6px 0 10px; font-size: 12px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.over { color: var(--danger); font-weight: 600; }
 </style>

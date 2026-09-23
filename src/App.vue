@@ -10,6 +10,7 @@ import IconButton from './components/IconButton.vue'
 import PhonePreview from './components/PhonePreview.vue'
 import ShortcutsDialog from './components/ShortcutsDialog.vue'
 import SlideGrid from './components/SlideGrid.vue'
+import { MAX_SLIDES } from './constants'
 import { isTextField } from './shortcuts'
 
 /** The slide whose card holds keyboard focus, if any. */
@@ -24,6 +25,9 @@ function focusSlide(id: string | undefined): void {
 export default defineComponent({
   name: 'App',
   components: { AppSidebar, IconButton, PhonePreview, ShortcutsDialog, SlideGrid },
+  data() {
+    return { MAX_SLIDES }
+  },
   computed: {
     ...mapStores(useProjectStore, useHistoryStore, useBrandStore, useTemplateStore),
   },
@@ -118,12 +122,16 @@ export default defineComponent({
       <div class="toolbar">
         <IconButton icon="undo" label="Undo (Ctrl+Z)" :disabled="!historyStore.canUndo" @click="historyStore.undo()" />
         <IconButton icon="redo" label="Redo (Ctrl+Y)" :disabled="!historyStore.canRedo" @click="historyStore.redo()" />
-        <button class="btn preview-btn" @click="openPreview">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 2h8a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zM11 18h2" /></svg>
+        <span class="divider" />
+        <button class="btn" @click="openPreview">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2" /><path d="M11 18.5h2" /></svg>
           Preview
         </button>
-        <button class="btn keys-btn" title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts" @click="openShortcuts">?</button>
-        <p class="status" role="status">{{ projectStore.status }}</p>
+        <p class="status" role="status">
+          <span v-if="projectStore.status" :key="projectStore.status" class="status-text">{{ projectStore.status }}</span>
+        </p>
+        <span class="count">{{ projectStore.project.slides.length }} of {{ MAX_SLIDES }} slides</span>
+        <IconButton icon="keyboard" label="Keyboard shortcuts (?)" @click="openShortcuts" />
       </div>
       <SlideGrid />
     </main>
@@ -133,15 +141,36 @@ export default defineComponent({
 </template>
 
 <style scoped>
-.app { display: grid; grid-template-columns: 300px 1fr; min-height: 100vh; }
-main { padding: 24px; }
-.toolbar { display: flex; align-items: center; gap: 8px; margin: 0 0 16px; }
-.status { color: var(--amber); margin: 0 0 0 8px; }
-.preview-btn { gap: 6px; padding: 6px 12px; }
-.keys-btn { width: 32px; height: 32px; padding: 0; font-size: 16px; }
-.preview-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.app { display: grid; grid-template-columns: 300px minmax(0, 1fr); min-height: 100vh; }
+main { min-width: 0; }
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 44px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+}
+.divider { width: 1px; height: 18px; margin: 0 6px; background: var(--border-strong); }
+.status {
+  flex: 1;
+  min-width: 0;
+  margin: 0 0 0 10px;
+  overflow: hidden;
+  color: var(--text-2);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.status-text { animation: status-in 0.2s ease-out; }
+@keyframes status-in { from { opacity: 0; } }
+.count { margin-right: 6px; color: var(--text-3); font-size: 12px; font-variant-numeric: tabular-nums; }
 
 @media (max-width: 760px) {
   .app { grid-template-columns: 1fr; }
+  .count { display: none; }
 }
 </style>

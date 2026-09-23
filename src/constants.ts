@@ -8,7 +8,7 @@ export const ASPECTS: Record<AspectId, { label: string; width: number; height: n
 }
 
 /** Used for editor-only text drawn on slides, like drop prompts. */
-export const SUB_FONT = '"Barlow Condensed", "Arial Narrow", sans-serif'
+export const SUB_FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif'
 
 /** Upscaling beyond this makes an image look soft once posted. */
 export const LOW_RES_SCALE = 1.2

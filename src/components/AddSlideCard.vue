@@ -21,7 +21,8 @@ export default defineComponent({
 </script>
 
 <template>
-  <div class="add">
+  <div class="add" :class="{ full: !projectStore.canAdd }">
+    <svg class="plus" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
     <p class="title">Add a slide</p>
     <select v-model="type" aria-label="New slide type">
       <option v-for="opt in typeOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
@@ -40,17 +41,14 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 10px;
-  min-height: 240px;
-  padding: 20px;
-  border: 1px dashed var(--line);
-  border-radius: 10px;
+  gap: 8px;
+  min-height: 300px;
+  padding: 24px;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  transition: border-color 0.12s, background-color 0.12s;
 }
-.title {
-  margin: 0;
-  font-family: "Barlow Condensed", sans-serif;
-  font-weight: 600;
-  font-size: 20px;
-}
-.btn:disabled { opacity: 0.5; cursor: default; }
+.add:hover { border-color: var(--text-3); background: color-mix(in srgb, var(--panel) 50%, transparent); }
+.plus { width: 22px; height: 22px; margin-bottom: 4px; fill: none; stroke: var(--text-2); stroke-width: 1.7; stroke-linecap: round; }
+.title { margin: 0 0 4px; font-size: 14px; font-weight: 600; }
 </style>

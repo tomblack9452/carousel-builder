@@ -86,7 +86,5 @@ export default defineComponent({
 
 <style scoped>
 select, input[type=range] { width: 100%; }
-.value { float: right; font-weight: 400; color: var(--muted); }
-.stack { display: grid; gap: 8px; margin-top: 8px; }
-.subtle { color: var(--muted); }
+.stack { display: grid; gap: 6px; margin-top: 10px; }
 </style>

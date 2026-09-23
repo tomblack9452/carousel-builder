@@ -51,7 +51,7 @@ export default defineComponent({
           :value="projectStore.project.export.quality" @input="onQuality"
         >
       </template>
-      <button class="btn primary" @click="projectStore.downloadAll()">
+      <button class="btn primary download" @click="projectStore.downloadAll()">
         Download all {{ projectStore.project.slides.length }} slides (zip)
       </button>
       <button class="btn" @click="projectStore.downloadPdf()">Download as PDF</button>
@@ -61,8 +61,8 @@ export default defineComponent({
 </template>
 
 <style scoped>
-.stack { display: grid; gap: 10px; margin-top: 10px; }
-.stack label { margin: 4px 0 0; }
+.stack { display: grid; gap: 8px; }
+.stack label { margin: 6px 0 0; }
 .stack select, .stack input[type=range] { width: 100%; }
-.value { float: right; font-weight: 400; color: var(--muted); }
+.download { height: 40px; margin-top: 6px; }
 </style>

@@ -26,9 +26,8 @@ function outlineSticker(ctx: CanvasRenderingContext2D, sticker: Sticker, doc: Re
   ctx.save()
   ctx.translate(b.x + b.w / 2, b.y + b.h / 2)
   ctx.rotate((sticker.rotation * Math.PI) / 180)
-  ctx.setLineDash([14, 10])
   ctx.lineWidth = 4
-  ctx.strokeStyle = '#ffb347'
+  ctx.strokeStyle = '#0d8bff'
   ctx.strokeRect(-b.w / 2 - 10, -b.h / 2 - 10, b.w + 20, b.h + 20)
   ctx.restore()
 }
@@ -284,30 +283,33 @@ export default defineComponent({
 </template>
 
 <style scoped>
+.wrap { position: relative; }
 canvas {
   display: block;
   width: 100%;
   border-radius: 4px;
-  background: #000;
+  background: #2a2a2a;
   touch-action: none;
 }
+canvas:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 canvas.interactive { cursor: grab; }
 canvas.empty { cursor: pointer; }
 canvas.dragging { cursor: grabbing; }
 canvas.over-text { cursor: move; }
-.wrap { position: relative; }
 .play {
   position: absolute;
   left: 10px;
   bottom: 10px;
-  width: 38px;
-  height: 38px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
   border: 0;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.65);
   color: #fff;
-  font-size: 14px;
+  font-size: 11px;
   cursor: pointer;
 }
-.play:hover { background: rgba(0, 0, 0, 0.8); }
+.play:hover { background: rgba(0, 0, 0, 0.85); }
 </style>

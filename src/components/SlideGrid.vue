@@ -30,8 +30,12 @@ export default defineComponent({
 <style scoped>
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 22px;
-  align-items: start;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  align-items: stretch;
+  padding: 16px 16px 48px;
+}
+@media (max-width: 760px) {
+  .grid { padding: 12px; gap: 12px; }
 }
 </style>

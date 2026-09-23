@@ -47,17 +47,32 @@ export default defineComponent({
 </template>
 
 <style scoped>
-.section { border-top: 1px solid var(--line); padding: 14px 0 4px; }
+.section { border-top: 1px solid var(--border); }
 summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  list-style: none;
   cursor: pointer;
-  font-family: "Barlow Condensed", sans-serif;
+  user-select: none;
+  font-size: 12px;
   font-weight: 600;
-  font-size: 18px;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: var(--muted);
-  list-style-position: outside;
+  color: var(--text);
 }
-.body { padding-bottom: 12px; }
-.body > :deep(label:first-child) { margin-top: 10px; }
+summary::-webkit-details-marker { display: none; }
+summary::before {
+  content: '';
+  width: 8px;
+  height: 5px;
+  flex: none;
+  background: var(--chevron) no-repeat center;
+  transform: rotate(-90deg);
+  transition: transform 0.12s;
+}
+.section[open] > summary::before { transform: none; }
+summary:hover { background: var(--hover); }
+.body { padding: 0 16px 18px; }
+.body > :deep(:first-child) { margin-top: 2px; }
 </style>

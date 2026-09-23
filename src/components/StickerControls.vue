@@ -84,8 +84,10 @@ export default defineComponent({
 <style scoped>
 .stickers { margin-top: 8px; }
 select { width: 100%; }
-.edit { margin-top: 6px; padding: 8px; border: 1px dashed var(--amber); border-radius: 6px; }
-.edit label { display: grid; grid-template-columns: 40px 1fr; align-items: center; gap: 8px; margin: 4px 0; font-size: 13px; }
+.edit { margin-top: 8px; padding: 10px; border-radius: var(--radius); background: var(--panel-sunken); box-shadow: inset 0 0 0 1px var(--accent); }
+.edit label { display: grid; grid-template-columns: 36px minmax(0, 1fr); align-items: center; gap: 8px; margin: 2px 0; font-size: 12px; color: var(--text-2); }
 .edit input[type=range] { width: 100%; }
-.row input[type=color] { flex: none; }
+.edit .row { margin-top: 8px; }
+.edit .btn { height: 26px; font-size: 12px; }
+.edit .hint { font-size: 11px; }
 </style>

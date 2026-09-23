@@ -48,8 +48,8 @@ export default defineComponent({
 </script>
 
 <template>
-  <details class="adjust">
-    <summary>Adjust image<span v-if="changed" class="dot" aria-label="(changed)" /></summary>
+  <details class="adjust disclosure">
+    <summary>Adjust image<span v-if="changed" class="set-dot" aria-label="(changed)" /></summary>
     <label v-for="c in CONTROLS" :key="c.key" class="control">
       <span>{{ c.label }} <span class="value">{{ c.format(slide.adjust[c.key]) }}</span></span>
       <input
@@ -67,12 +67,10 @@ export default defineComponent({
 </template>
 
 <style scoped>
-.adjust { margin: 8px 0 0; }
-summary { cursor: pointer; font-weight: 600; font-size: 14px; color: var(--muted); }
-.dot { display: inline-block; width: 7px; height: 7px; margin-left: 6px; border-radius: 50%; background: var(--amber); }
-.control { display: grid; margin: 8px 0 0; font-size: 13px; }
+.adjust { margin: 10px 0 0; }
+summary { color: var(--text-2); font-size: 12px; }
+summary:hover, .adjust[open] > summary { color: var(--text); }
+.control { display: grid; gap: 3px; margin: 10px 0 0; font-size: 12px; color: var(--text-2); }
 .control input { width: 100%; }
-.value { float: right; font-weight: 400; color: var(--muted); }
-.reset { width: 100%; margin-top: 8px; padding: 6px; }
-.reset:disabled { opacity: 0.5; cursor: default; }
+.reset { width: 100%; height: 26px; margin-top: 10px; font-size: 12px; }
 </style>

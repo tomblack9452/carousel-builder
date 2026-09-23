@@ -43,6 +43,6 @@ export default defineComponent({
 
 <style scoped>
 .wide { width: 100%; margin-top: 8px; }
-.wide:disabled { opacity: 0.5; cursor: default; }
-.on { color: var(--text); margin-top: 10px; }
+.on { display: flex; gap: 8px; align-items: baseline; margin-top: 0; color: var(--text); }
+.on::before { content: ''; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--success); transform: translateY(-1px); }
 </style>

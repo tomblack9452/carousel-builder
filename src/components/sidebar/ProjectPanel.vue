@@ -53,19 +53,35 @@ export default defineComponent({
       <button class="btn" @click="projectStore.saveProjectFile()">Save</button>
     </div>
     <input ref="file" type="file" accept=".json,application/json" hidden @change="onFile">
-    <p class="hint">{{ saveNote }}</p>
-    <button class="btn wide" @click="openImport">Import text from a spreadsheet</button>
-    <button class="btn wide" @click="projectStore.copyShareLink()">Copy share link</button>
-    <ImportTextDialog ref="importDialog" />
+    <p class="hint save" :class="projectStore.saveState">{{ saveNote }}</p>
 
-    <label for="aspect">Slide size</label>
-    <select id="aspect" v-model="projectStore.project.aspect">
-      <option v-for="(a, id) in ASPECTS" :key="id" :value="id">{{ a.label }}</option>
-    </select>
+    <p class="field-label">Slide size</p>
+    <div class="segmented" role="group" aria-label="Slide size">
+      <button
+        v-for="(a, id) in ASPECTS"
+        :key="id"
+        type="button"
+        :aria-pressed="projectStore.project.aspect === id"
+        :title="a.label"
+        @click="projectStore.project.aspect = id"
+      >
+        {{ id }}<small>{{ a.width }}×{{ a.height }}</small>
+      </button>
+    </div>
+
+    <div class="stack">
+      <button class="btn" @click="openImport">Import text from a spreadsheet</button>
+      <button class="btn" @click="projectStore.copyShareLink()">Copy share link</button>
+    </div>
+    <ImportTextDialog ref="importDialog" />
   </SidebarSection>
 </template>
 
 <style scoped>
-select { width: 100%; }
-.wide { width: 100%; margin-top: 4px; }
+.save::before { content: ''; display: inline-block; width: 6px; height: 6px; margin: 0 6px 1px 0; border-radius: 50%; background: var(--text-3); }
+.save.saved::before { background: var(--success); }
+.save.unavailable::before { background: var(--warn); }
+.segmented button { height: 38px; line-height: 1.25; }
+.segmented button small { display: block; font-size: 10px; font-weight: 400; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.stack { display: grid; gap: 6px; margin-top: 14px; }
 </style>

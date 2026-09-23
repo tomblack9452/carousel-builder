@@ -4,18 +4,24 @@ import { mapStores } from 'pinia'
 import { FONT_PAIRS, type FontPair, fontPair, nearestWeight, stack } from '../../fonts/catalog'
 import { PRESETS, matchingPreset, presetTheme } from '../../model/presets'
 import { useProjectStore } from '../../stores/project'
-import type { Theme } from '../../types'
+import type { Theme, TitleEffect } from '../../types'
 import SidebarSection from './SidebarSection.vue'
 
 const WEIGHT_NAMES: Record<number, string> = {
   400: 'Regular', 500: 'Medium', 600: 'Semibold', 700: 'Bold', 800: 'Extra bold', 900: 'Black',
 }
 
+const EFFECTS: { value: TitleEffect; label: string }[] = [
+  { value: 'hard', label: 'Hard shadow' },
+  { value: 'glow', label: 'Glow' },
+  { value: 'none', label: 'None' },
+]
+
 export default defineComponent({
   name: 'StylePanel',
   components: { SidebarSection },
   data() {
-    return { FONT_PAIRS, PRESETS }
+    return { FONT_PAIRS, PRESETS, EFFECTS }
   },
   computed: {
     ...mapStores(useProjectStore),
@@ -75,10 +81,10 @@ export default defineComponent({
         @click="applyPreset(p.id)"
       >
         <span class="swatch" :style="{ background: p.theme.background }">
-          <span :style="{ background: p.theme.accent }" />
-          <span :style="{ background: p.theme.text }" />
+          <span class="bar" :style="{ background: p.theme.accent }" />
+          <span class="bar short" :style="{ background: p.theme.text }" />
         </span>
-        {{ p.label }}
+        <span class="preset-name">{{ p.label }}</span>
       </button>
     </div>
 
@@ -89,9 +95,9 @@ export default defineComponent({
     <select id="fontPair" v-model="theme.fontPair">
       <option v-for="p in FONT_PAIRS" :key="p.id" :value="p.id">{{ p.label }}</option>
     </select>
-    <div class="preview" aria-hidden="true">
-      <span class="preview-heading" :style="previewStyle">Heading</span>
-      <span class="preview-body" :style="bodyPreviewStyle">Body text looks like this</span>
+    <div class="specimen" aria-hidden="true">
+      <span class="specimen-heading" :style="previewStyle">Heading</span>
+      <span class="specimen-body" :style="bodyPreviewStyle">Body text looks like this</span>
     </div>
 
     <template v-if="weightOptions.length > 1">
@@ -124,88 +130,83 @@ export default defineComponent({
       Uppercase headings
     </label>
 
+    <p class="field-label">Colours</p>
     <div class="colours">
-      <label>
-        <input v-model="theme.accent" type="color">
-        Accent
-      </label>
-      <label>
-        <input v-model="theme.text" type="color">
-        Text
-      </label>
-      <label>
-        <input v-model="theme.background" type="color">
-        Background
-      </label>
-      <label>
-        <input v-model="theme.overlay" type="color">
-        Overlay
-      </label>
+      <label><input v-model="theme.accent" type="color"><span>Accent<code>{{ theme.accent }}</code></span></label>
+      <label><input v-model="theme.text" type="color"><span>Text<code>{{ theme.text }}</code></span></label>
+      <label><input v-model="theme.background" type="color"><span>Background<code>{{ theme.background }}</code></span></label>
+      <label><input v-model="theme.overlay" type="color"><span>Overlay<code>{{ theme.overlay }}</code></span></label>
     </div>
     <p class="hint">Accent colours title effects, list numbers and labels. Background shows on slides without an image.</p>
     <button class="btn match" @click="projectStore.matchColoursToCover()">Match colours to cover image</button>
 
-    <label for="titleEffect">Title effect</label>
-    <select id="titleEffect" v-model="theme.titleEffect">
-      <option value="hard">Hard shadow</option>
-      <option value="glow">Glow</option>
-      <option value="none">None</option>
-    </select>
-
-    <p class="field-label">Swipe cues</p>
-    <label class="check"><input v-model="projectStore.project.cues.numbers" type="checkbox"> Slide numbers (3/10)</label>
-    <label class="check"><input v-model="projectStore.project.cues.dots" type="checkbox"> Progress dots</label>
-    <label class="check"><input v-model="projectStore.project.cues.arrow" type="checkbox"> Swipe arrow</label>
+    <p class="field-label">Title effect</p>
+    <div class="segmented" role="group" aria-label="Title effect">
+      <button
+        v-for="e in EFFECTS"
+        :key="e.value"
+        type="button"
+        :aria-pressed="theme.titleEffect === e.value"
+        @click="theme.titleEffect = e.value"
+      >
+        {{ e.label }}
+      </button>
+    </div>
 
     <label for="overlayStrength">Image overlay <span class="value">{{ percent(theme.overlayStrength) }}</span></label>
     <input
       id="overlayStrength" type="range" min="0" max="1.5" step="0.05"
       :value="theme.overlayStrength" @input="setNumber('overlayStrength', $event)"
     >
+
+    <p class="field-label">Swipe cues</p>
+    <label class="check"><input v-model="projectStore.project.cues.numbers" type="checkbox"> Slide numbers (3/10)</label>
+    <label class="check"><input v-model="projectStore.project.cues.dots" type="checkbox"> Progress dots</label>
+    <label class="check"><input v-model="projectStore.project.cues.arrow" type="checkbox"> Swipe arrow</label>
   </SidebarSection>
 </template>
 
 <style scoped>
 select, input[type=range] { width: 100%; }
-.value { float: right; font-weight: 400; color: var(--muted); }
-.check { display: flex; align-items: center; gap: 8px; font-weight: 600; margin: 8px 0 0; }
-.check input { accent-color: var(--amber); width: 16px; height: 16px; margin: 0; }
+.check { display: flex; align-items: center; gap: 8px; margin: 8px 0 0; color: var(--text); cursor: pointer; }
+.check input { width: 14px; height: 14px; margin: 0; }
+
 .presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .preset {
   display: grid;
-  justify-items: start;
   gap: 5px;
-  padding: 6px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: var(--dusk);
-  color: var(--text);
-  font: 600 13px Barlow, sans-serif;
+  padding: 4px 4px 6px;
+  border: 0;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--text-2);
+  font: 12px var(--font);
+  text-align: center;
   cursor: pointer;
 }
-.preset:hover { border-color: var(--muted); }
-.preset.active { border-color: var(--amber); }
-.swatch {
-  display: flex;
-  gap: 3px;
-  width: 100%;
-  padding: 6px;
-  border-radius: 4px;
-}
-.swatch span { width: 12px; height: 12px; border-radius: 50%; }
-.match { width: 100%; margin-top: 8px; }
-.colours { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; margin-top: 14px; }
-.colours label { display: flex; align-items: center; gap: 8px; margin: 0; font-weight: 600; }
-.preview {
+.preset:hover { background: var(--hover); color: var(--text); }
+.preset.active { color: var(--text); }
+.preset.active .swatch { box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--accent); }
+.swatch { display: grid; align-content: end; gap: 3px; height: 40px; padding: 7px; border-radius: 4px; box-shadow: inset 0 0 0 1px rgba(128, 128, 128, 0.25); }
+.bar { display: block; width: 70%; height: 4px; border-radius: 2px; }
+.bar.short { width: 42%; }
+
+.specimen {
   display: grid;
   gap: 2px;
-  margin-top: 8px;
+  margin-top: 6px;
   padding: 10px 12px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: var(--dusk);
+  border-radius: var(--radius);
+  background: var(--panel-sunken);
+  box-shadow: inset 0 0 0 1px var(--border);
   overflow: hidden;
 }
-.preview-heading { font-size: 28px; line-height: 1.1; white-space: nowrap; }
-.preview-body { font-size: 14px; color: var(--muted); }
+.specimen-heading { font-size: 26px; line-height: 1.1; white-space: nowrap; }
+.specimen-body { font-size: 13px; color: var(--text-2); }
+
+.colours { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.colours label { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--text); cursor: pointer; }
+.colours span { display: grid; line-height: 1.25; }
+.colours code { font: 11px var(--font); color: var(--text-3); text-transform: uppercase; font-variant-numeric: tabular-nums; }
+.match { width: 100%; margin-top: 10px; }
 </style>

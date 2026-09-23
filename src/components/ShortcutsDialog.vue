@@ -28,43 +28,30 @@ export default defineComponent({
 
 <template>
   <dialog ref="dialog" class="modal" aria-labelledby="shortcuts-title" @click="onClick">
-    <h2 id="shortcuts-title">Keyboard shortcuts</h2>
-    <section v-for="g in SHORTCUTS" :key="g.group">
-      <h3>{{ g.group }}</h3>
-      <dl>
-        <template v-for="[keys, action] in g.items" :key="keys">
-          <dt><kbd>{{ keys }}</kbd></dt>
-          <dd>{{ action }}</dd>
-        </template>
-      </dl>
-    </section>
-    <p class="hint">On a Mac, use Cmd instead of Ctrl.</p>
-    <div class="row actions"><button class="btn" @click="close">Close</button></div>
+    <header class="modal-head">
+      <h2 id="shortcuts-title">Keyboard shortcuts</h2>
+    </header>
+    <div class="modal-body">
+      <section v-for="g in SHORTCUTS" :key="g.group">
+        <h3>{{ g.group }}</h3>
+        <dl>
+          <template v-for="[keys, action] in g.items" :key="keys">
+            <dt><kbd>{{ keys }}</kbd></dt>
+            <dd>{{ action }}</dd>
+          </template>
+        </dl>
+      </section>
+    </div>
+    <p class="hint mac">On a Mac, use Cmd instead of Ctrl.</p>
+    <footer class="modal-foot"><button class="btn" @click="close">Close</button></footer>
   </dialog>
 </template>
 
 <style scoped>
-.modal {
-  width: min(480px, calc(100vw - 32px));
-  padding: 20px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--panel);
-  color: var(--text);
-}
-.modal::backdrop { background: rgba(10, 8, 18, 0.7); }
-h2 { margin: 0 0 8px; font: 400 26px Anton, Impact, sans-serif; }
-h3 { margin: 14px 0 6px; font-size: 14px; color: var(--muted); }
-dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 0; }
+section + section { margin-top: 16px; }
+h3 { margin: 0 0 6px; font-size: 12px; font-weight: 600; color: var(--text-2); }
+dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; align-items: center; margin: 0; }
 dt { white-space: nowrap; }
 dd { margin: 0; }
-kbd {
-  padding: 1px 6px;
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  background: var(--dusk);
-  font: 600 12px ui-monospace, monospace;
-}
-.actions { justify-content: flex-end; margin-top: 14px; }
-.actions .btn { flex: none; }
+.mac { margin: 0; padding: 0 18px 14px; }
 </style>

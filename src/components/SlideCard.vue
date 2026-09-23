@@ -182,15 +182,7 @@ export default defineComponent({
     @dragleave="onDragLeave"
     @drop="onDrop"
   >
-    <SlideCanvas
-      :slide="slide"
-      :index="index"
-      :selected-sticker="selectedSticker"
-      @pick="pickFile"
-      @select="selectedSticker = $event"
-    />
-
-    <div class="meta">
+    <div class="head">
       <span
         class="grip"
         draggable="true"
@@ -198,75 +190,92 @@ export default defineComponent({
         @dragstart="onGripDragStart"
         @dragend="clearDrag"
       >
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01" /></svg>
-        Slide {{ index + 1 }} of {{ total }}
+        <svg viewBox="0 0 10 16" aria-hidden="true"><circle cx="3" cy="3" r="1.3" /><circle cx="7" cy="3" r="1.3" /><circle cx="3" cy="8" r="1.3" /><circle cx="7" cy="8" r="1.3" /><circle cx="3" cy="13" r="1.3" /><circle cx="7" cy="13" r="1.3" /></svg>
+        Slide {{ index + 1 }}
       </span>
       <select :value="slide.type" :aria-label="`Slide ${index + 1} type`" @change="onType">
         <option v-for="opt in typeOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
       </select>
     </div>
-    <p class="warn">{{ lowResWarning }}</p>
 
-    <template v-for="field in (['title', 'body'] as const)" :key="field">
-      <template v-if="info[field]">
-        <textarea
-          v-if="info[field]?.multiline"
-          :value="slide[field]"
-          :placeholder="info[field]?.placeholder"
-          :aria-label="`Slide ${index + 1} ${info[field]?.label}`"
-          rows="3"
-          @input="onText(field, $event)"
-        />
-        <input
-          v-else
-          type="text"
-          :value="slide[field]"
-          :placeholder="info[field]?.placeholder"
-          :aria-label="`Slide ${index + 1} ${info[field]?.label}`"
-          @input="onText(field, $event)"
-        >
+    <div class="media">
+      <SlideCanvas
+        :slide="slide"
+        :index="index"
+        :selected-sticker="selectedSticker"
+        @pick="pickFile"
+        @select="selectedSticker = $event"
+      />
+      <span v-if="lowResWarning" class="badge" role="img" :aria-label="lowResWarning" :title="lowResWarning">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.8l6.5 11.7h-13zM8 6.3v3.3M8 11.6h.01" /></svg>
+        Low res
+      </span>
+    </div>
+
+    <div class="group fields">
+      <template v-for="field in (['title', 'body'] as const)" :key="field">
+        <template v-if="info[field]">
+          <textarea
+            v-if="info[field]?.multiline"
+            :value="slide[field]"
+            :placeholder="info[field]?.placeholder"
+            :aria-label="`Slide ${index + 1} ${info[field]?.label}`"
+            rows="3"
+            @input="onText(field, $event)"
+          />
+          <input
+            v-else
+            type="text"
+            :value="slide[field]"
+            :placeholder="info[field]?.placeholder"
+            :aria-label="`Slide ${index + 1} ${info[field]?.label}`"
+            @input="onText(field, $event)"
+          >
+        </template>
       </template>
-    </template>
 
-    <div v-if="aiStore.hasKey && info.title" class="suggest">
-      <button class="link" :disabled="aiBusy === 'title'" @click="suggestTitles">
-        {{ aiBusy === 'title' ? 'Thinking…' : `Suggest ${info.title.label.toLowerCase()}s` }}
-      </button>
-      <div v-if="titleOptions.length" class="options">
-        <button v-for="t in titleOptions" :key="t" class="option" @click="applyTitle(t)">{{ t }}</button>
+      <div v-if="aiStore.hasKey && info.title" class="suggest">
+        <button class="link" :disabled="aiBusy === 'title'" @click="suggestTitles">
+          {{ aiBusy === 'title' ? 'Thinking…' : `Suggest ${info.title.label.toLowerCase()}s` }}
+        </button>
+        <div v-if="titleOptions.length" class="options">
+          <button v-for="t in titleOptions" :key="t" class="option" @click="applyTitle(t)">{{ t }}</button>
+        </div>
       </div>
     </div>
 
-    <StickerControls
-      :slide="slide"
-      :index="index"
-      :selected="selectedSticker"
-      @select="selectedSticker = $event"
-    />
-
-    <div class="row text-pos" role="group" :aria-label="`Slide ${index + 1} text position`">
-      <IconButton
-        v-for="a in ALIGNS"
-        :key="a.value"
-        :icon="a.icon"
-        :label="`Align text ${a.label}`"
-        :active="slide.text.align === a.value"
-        @click="projectStore.setTextAlign(slide.id, a.value)"
-      />
-      <span class="sep" />
-      <IconButton
-        v-for="a in ANCHORS"
-        :key="a.value"
-        :icon="a.value"
-        :label="`Move text to the ${a.value}`"
-        :active="slide.text.anchor === a.value"
-        @click="projectStore.snapText(slide.id, a.value)"
+    <div class="group">
+      <div class="text-pos" role="group" :aria-label="`Slide ${index + 1} text position`">
+        <IconButton
+          v-for="a in ALIGNS"
+          :key="a.value"
+          :icon="a.icon"
+          :label="`Align text ${a.label}`"
+          :active="slide.text.align === a.value"
+          @click="projectStore.setTextAlign(slide.id, a.value)"
+        />
+        <span class="sep" />
+        <IconButton
+          v-for="a in ANCHORS"
+          :key="a.value"
+          :icon="a.value"
+          :label="`Move text to the ${a.value}`"
+          :active="slide.text.anchor === a.value"
+          @click="projectStore.snapText(slide.id, a.value)"
+        />
+      </div>
+      <StickerControls
+        :slide="slide"
+        :index="index"
+        :selected="selectedSticker"
+        @select="selectedSticker = $event"
       />
     </div>
 
-    <template v-if="takesImage">
+    <div v-if="takesImage" class="group">
       <input ref="file" type="file" :accept="info.video ? 'video/*' : 'image/*'" hidden @change="onFileChange">
-      <div v-for="(slot, i) in slots" :key="i" class="row">
+      <div v-for="(slot, i) in slots" :key="i" class="slot">
+        <span class="zoom-label" aria-hidden="true">Zoom{{ slots.length > 1 ? ` ${i + 1}` : '' }}</span>
         <input
           type="range"
           min="1"
@@ -278,15 +287,15 @@ export default defineComponent({
           @input="onZoom(i, $event)"
         >
         <button class="btn" @click="pickFile(i)">
-          {{ slot.asset ? 'Replace' : 'Add' }} {{ mediaWord }}{{ slots.length > 1 ? ` ${i + 1}` : '' }}
+          {{ slot.asset ? 'Replace' : 'Add' }} {{ mediaWord }}
         </button>
       </div>
       <p v-if="info.imageHint" class="hint">{{ info.imageHint }}</p>
       <SlideAdjustments v-if="slots.some((s) => s.asset) || slide.type === 'cta'" :slide="slide" :index="index" />
-    </template>
+    </div>
 
-    <details class="alt">
-      <summary>Alt text<span v-if="slide.alt.trim()" class="dot" aria-label="(added)" /></summary>
+    <details class="group disclosure alt">
+      <summary>Alt text<span v-if="slide.alt.trim()" class="set-dot" aria-label="(added)" /></summary>
       <textarea
         :value="slide.alt"
         rows="2"
@@ -299,7 +308,7 @@ export default defineComponent({
       </button>
     </details>
 
-    <div class="row actions">
+    <div class="foot">
       <IconButton
         icon="left"
         :label="`Move slide ${index + 1} earlier`"
@@ -324,92 +333,124 @@ export default defineComponent({
         :disabled="total <= 1"
         @click="projectStore.removeSlide(slide.id)"
       />
-      <button class="btn" @click="projectStore.downloadSlide(slide.id)">Download</button>
+      <button class="btn download" @click="projectStore.downloadSlide(slide.id)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14" /></svg>
+        Download
+      </button>
     </div>
   </div>
 </template>
 
 <style scoped>
 .card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-radius: var(--radius-lg);
   background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 12px;
+  box-shadow: 0 0 0 1px var(--border);
+  transition: box-shadow 0.12s;
 }
-.card { position: relative; }
-.card:focus-within { border-color: var(--muted); }
-.card.over { border-color: var(--amber); }
+/* The card you're working in is the "selected slide" the shortcuts act on. */
+.card:focus-within { box-shadow: 0 0 0 2px var(--accent); }
+.card.over { box-shadow: 0 0 0 2px var(--accent), 0 0 0 6px var(--accent-soft); }
 /* Insertion marker when reordering. */
 .card.drop-before::before, .card.drop-after::after {
   content: '';
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 4px;
+  width: 3px;
   border-radius: 2px;
-  background: var(--amber);
+  background: var(--accent);
 }
-.card.drop-before::before { left: -13px; }
-.card.drop-after::after { right: -13px; }
+.card.drop-before::before { left: -10px; }
+.card.drop-after::after { right: -10px; }
 
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  height: 40px;
+  padding: 0 8px 0 6px;
+}
 .grip {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  padding: 4px 6px 4px 2px;
+  border-radius: var(--radius);
+  font-weight: 600;
+  white-space: nowrap;
   cursor: grab;
   user-select: none;
 }
-.grip svg {
-  width: 18px;
-  height: 18px;
-  fill: none;
-  stroke: var(--muted);
-  stroke-width: 3;
-  stroke-linecap: round;
+.grip:hover { background: var(--hover); }
+.grip:active { cursor: grabbing; }
+.grip svg { width: 10px; height: 14px; fill: var(--text-3); }
+.head select { width: auto; min-width: 0; max-width: 65%; height: 26px; font-size: 12px; }
+
+.media { position: relative; padding: 0 10px; }
+.badge {
+  position: absolute;
+  top: 8px;
+  left: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 7px 3px 5px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #ffc15c;
+  font-size: 11px;
+  font-weight: 600;
+  pointer-events: auto;
+  cursor: help;
 }
-.actions { margin-top: 10px; }
-.link {
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--amber);
-  font: 600 13px Barlow, sans-serif;
-  cursor: pointer;
-}
-.link:disabled { color: var(--muted); cursor: default; }
-.suggest { margin: 0 0 8px; }
+.badge svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
+
+.group { padding: 10px; border-top: 1px solid var(--border); }
+.fields { display: grid; gap: 6px; padding-top: 10px; border-top: 0; }
+.fields textarea { min-height: 0; }
+
+.suggest { margin-top: 2px; }
 .options { display: grid; gap: 4px; margin-top: 6px; }
 .option {
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--field);
+  color: var(--text);
+  font: 13px var(--font);
   text-align: left;
   white-space: pre-line;
-  padding: 6px 8px;
-  border: 1px dashed var(--line);
-  border-radius: 6px;
-  background: var(--dusk);
-  color: var(--text);
-  font: 14px Barlow, sans-serif;
   cursor: pointer;
 }
-.option:hover { border-color: var(--amber); }
-.alt { margin-top: 8px; }
-.alt summary { cursor: pointer; font-weight: 600; font-size: 14px; color: var(--muted); }
-.alt textarea { margin-top: 6px; }
-.dot { display: inline-block; width: 7px; height: 7px; margin-left: 6px; border-radius: 50%; background: var(--amber); }
-.text-pos { gap: 4px; margin: 0 0 6px; }
-.text-pos .sep { width: 1px; align-self: stretch; margin: 4px 4px; background: var(--line); }
-.card input[type=text], .card textarea { margin-bottom: 6px; }
-.card textarea { min-height: 0; }
+.option:hover { background: var(--accent-soft); }
 
-.meta {
+.text-pos { display: flex; align-items: center; gap: 2px; }
+.text-pos .sep { width: 1px; height: 16px; margin: 0 6px; background: var(--border-strong); }
+
+.slot { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+.slot + .slot { margin-top: 6px; }
+.slot input[type=range] { width: 100%; }
+.zoom-label { font-size: 12px; color: var(--text-2); }
+.slot .btn { height: 26px; padding: 0 10px; font-size: 12px; }
+
+.alt > summary { color: var(--text-2); font-size: 12px; }
+.alt > summary:hover, .alt[open] > summary { color: var(--text); }
+.alt textarea { margin-top: 8px; min-height: 0; }
+.alt .link { margin-top: 6px; }
+
+.foot {
   display: flex;
-  justify-content: space-between;
-  margin: 10px 0 4px;
-  font-family: "Barlow Condensed", sans-serif;
-  font-weight: 600;
-  font-size: 17px;
+  align-items: center;
+  gap: 2px;
+  margin-top: auto;
+  padding: 8px 10px;
+  border-top: 1px solid var(--border);
 }
-.meta { align-items: center; gap: 8px; }
-.meta select { font: 600 15px Barlow, sans-serif; }
-
-.warn { color: var(--amber); font-size: 13px; min-height: 1.2em; margin: 0 0 6px; }
+.download { height: 26px; margin-left: auto; padding: 0 10px; font-size: 12px; }
 </style>

@@ -6,8 +6,8 @@ import { fitImage } from './geometry'
 export type Ctx = CanvasRenderingContext2D
 
 /** Editor-only colours for empty image drop zones (never part of a finished slide). */
-const PROMPT_BG = '#2a2540'
-const PROMPT_TEXT = '#a59fb8'
+const PROMPT_BG = '#2a2a2a'
+const PROMPT_TEXT = '#8a8a8a'
 
 export function font(weight: number | '', size: number, family: string): string {
   return `${weight ? weight + ' ' : ''}${size}px ${family}`
@@ -101,16 +101,42 @@ export function drawBackground(
   return !!img
 }
 
+/** Empty-slot prompt: an image icon over a short instruction. */
 export function placeholder(ctx: Ctx, text: string, frame = fullFrame(ctx)): void {
   const { x, y, w, h } = frame
+  const cx = x + w / 2
+  const cy = y + h / 2
+  const s = Math.min(1, w / 540)
+  ctx.save()
   ctx.fillStyle = PROMPT_BG
   ctx.fillRect(x, y, w, h)
+  ctx.strokeStyle = PROMPT_TEXT
   ctx.fillStyle = PROMPT_TEXT
-  ctx.font = font(600, 52, SUB_FONT)
+  ctx.lineWidth = 3 * s
+  ctx.lineJoin = 'round'
+  // Picture frame with a sun and a hill.
+  const iw = 72 * s
+  const ih = 56 * s
+  const top = cy - 30 * s - ih
+  ctx.beginPath()
+  ctx.roundRect(cx - iw / 2, top, iw, ih, 6 * s)
+  ctx.stroke()
+  ctx.beginPath()
+  ctx.arc(cx + iw * 0.2, top + ih * 0.3, 6 * s, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.beginPath()
+  ctx.moveTo(cx - iw / 2 + 6 * s, top + ih - 6 * s)
+  ctx.lineTo(cx - iw * 0.1, top + ih * 0.45)
+  ctx.lineTo(cx + iw * 0.12, top + ih * 0.7)
+  ctx.lineTo(cx + iw * 0.25, top + ih * 0.58)
+  ctx.lineTo(cx + iw / 2 - 6 * s, top + ih - 6 * s)
+  ctx.stroke()
+  ctx.font = font(500, Math.round(34 * s), SUB_FONT)
   ctx.letterSpacing = '0px'
   ctx.textAlign = 'center'
-  ctx.fillText(text, x + w / 2, y + h / 2)
-  ctx.textAlign = 'left'
+  ctx.textBaseline = 'middle'
+  ctx.fillText(text, cx, cy + 20 * s)
+  ctx.restore()
 }
 
 function overlayAlpha(doc: RenderDoc, alpha: number): number {
