@@ -1,6 +1,6 @@
 # Carousel builder
 
-Build Instagram carousel slides (1080×1350 JPG) in the browser: drop in screenshots, position them, add titles, export a zip.
+Build Instagram carousel slides (1080×1350 JPG) in the browser: drop in images, position them, add titles, export a zip.
 
 ## Commands
 

@@ -6,7 +6,7 @@ import { type TextLine, bodyLines, drawTextBlock, headingLines } from '../text'
 export function drawImage(ctx: Ctx, slide: Slide, doc: RenderDoc): void {
   const { width: W, height: H } = doc
   const ts = typeStyle(doc)
-  drawBackground(ctx, doc, slide, 0, 'Drop a screenshot here')
+  drawBackground(ctx, doc, slide, 0, 'Drop an image here')
   shade(ctx, doc, 0.55, 0.75)
 
   const lines: TextLine[] = []

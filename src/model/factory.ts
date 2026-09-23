@@ -77,11 +77,11 @@ export function starterProject(): Project {
     handle: '@yourhandle',
     theme: defaultTheme(),
     slides: [
-      createSlide('cover', { title: 'The beauty\nof sunset\nin games' }),
-      ...Array.from({ length: 10 }, () => createSlide('image')),
+      createSlide('cover', { title: 'Swipe through\nfor the full story' }),
+      ...Array.from({ length: 5 }, () => createSlide('image')),
       createSlide('cta', {
-        title: "Which one's yours?",
-        body: 'Drop your favourite game sunset in the comments',
+        title: 'Which one is your favourite?',
+        body: 'Let me know in the comments',
       }),
     ],
   }

@@ -13,7 +13,7 @@ export function slideFileName(slide: Slide, index: number): string {
   return `${number}-${label}.jpg`
 }
 
-/** Named after the cover title, e.g. "the-beauty-of-sunset-in-games". */
+/** Named after the cover title, e.g. "swipe-through-for-the-full-story". */
 export function projectSlug(doc: RenderDoc): string {
   const cover = doc.project.slides.find((s) => s.type === 'cover')
   return slug(cover?.title ?? '') || 'carousel'
