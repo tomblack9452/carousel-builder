@@ -1,26 +1,16 @@
 <script lang="ts">
 import { defineComponent } from 'vue'
 import { mapStores } from 'pinia'
-import { ASPECTS } from '../constants'
 import { useProjectStore } from '../stores/project'
+import ExportPanel from './sidebar/ExportPanel.vue'
+import ProjectPanel from './sidebar/ProjectPanel.vue'
+import StylePanel from './sidebar/StylePanel.vue'
 
 export default defineComponent({
   name: 'AppSidebar',
-  data() {
-    return { ASPECTS }
-  },
+  components: { ExportPanel, ProjectPanel, StylePanel },
   computed: {
     ...mapStores(useProjectStore),
-  },
-  methods: {
-    openBulkPicker() {
-      (this.$refs.bulk as HTMLInputElement).click()
-    },
-    onBulkChange(event: Event) {
-      const input = event.target as HTMLInputElement
-      this.projectStore.loadBulk([...(input.files ?? [])])
-      input.value = ''
-    },
   },
 })
 </script>
@@ -50,28 +40,9 @@ export default defineComponent({
       {{ projectStore.doc.width }}×{{ projectStore.doc.height }} JPG.
     </p>
 
-    <label for="aspect">Slide size</label>
-    <select id="aspect" v-model="projectStore.project.aspect">
-      <option v-for="(a, id) in ASPECTS" :key="id" :value="id">{{ a.label }}</option>
-    </select>
-
-    <label for="handle">Your handle</label>
-    <input id="handle" v-model="projectStore.project.handle" type="text">
-
-    <label for="accent">Title shadow colour</label>
-    <input id="accent" v-model="projectStore.project.accent" type="color">
-
-    <div class="stack">
-      <button class="btn" @click="openBulkPicker">Load images at once</button>
-      <input ref="bulk" type="file" accept="image/*" multiple hidden @change="onBulkChange">
-      <p class="hint">
-        Files fill the image slides in filename order (name them 01.jpg, 02.jpg and so on), adding slides if
-        needed. The first one also becomes the cover if it's empty.
-      </p>
-      <button class="btn primary" @click="projectStore.downloadAll()">
-        Download all {{ projectStore.project.slides.length }} slides
-      </button>
-    </div>
+    <ProjectPanel />
+    <StylePanel />
+    <ExportPanel />
   </aside>
 </template>
 
@@ -100,9 +71,7 @@ aside {
   vertical-align: top;
   margin-right: 0.22em;
 }
-.intro { color: var(--muted); margin: 0 0 10px; }
-aside select { width: 100%; }
-.stack { display: grid; gap: 10px; margin-top: 22px; }
+.intro { color: var(--muted); margin: 0 0 16px; }
 
 @media (max-width: 760px) {
   aside { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--line); }

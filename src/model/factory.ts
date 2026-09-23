@@ -51,6 +51,20 @@ export function changeSlideType(slide: Slide, type: SlideType): void {
   if (!slide.title.trim() && !slide.body.trim()) Object.assign(slide, SAMPLE_CONTENT[type])
 }
 
+/** A short sample project for "New project". */
+export function blankProject(): Project {
+  return {
+    ...starterProject(),
+    slides: [
+      createSampleSlide('cover'),
+      createSlide('image'),
+      createSlide('image'),
+      createSlide('image'),
+      createSampleSlide('cta'),
+    ],
+  }
+}
+
 /** The project a first-time visitor starts with. */
 export function starterProject(): Project {
   return {

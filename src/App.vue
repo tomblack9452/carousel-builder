@@ -12,6 +12,8 @@ export default defineComponent({
     ...mapStores(useProjectStore),
   },
   mounted() {
+    this.projectStore.init()
+
     // Canvas text only uses a web font once it's loaded, so redraw when they arrive.
     Promise.all([document.fonts.load('40px Anton'), document.fonts.load('600 40px "Barlow Condensed"')])
       .catch(() => {})

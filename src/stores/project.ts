@@ -1,12 +1,22 @@
 import { defineStore } from 'pinia'
 import { ASPECTS, MAX_SLIDES } from '../constants'
 import { downloadBlob, projectSlug, renderToBlob, slideFileName, zipSlides } from '../export/files'
-import { changeSlideType, cloneSlide, createSampleSlide, createSlide, starterProject } from '../model/factory'
+import { blankProject, changeSlideType, cloneSlide, createSampleSlide, createSlide, starterProject } from '../model/factory'
+import { normalizeProject, projectAssetIds } from '../model/normalize'
 import { SLIDE_TYPES } from '../model/slideTypes'
+import { db } from '../persist/db'
+import { readProjectFile, writeProjectFile } from '../persist/projectFile'
 import { slotFrames } from '../render'
 import { clamp, fitImage } from '../render/geometry'
 import type { ImageSlot, RenderDoc, Slide, SlideType } from '../types'
-import { useAssetStore } from './assets'
+import { assetBlob, useAssetStore } from './assets'
+
+const SAVE_KEY = 'project'
+const SAVE_DELAY = 400
+let saveTimer = 0
+let lastSaved = ''
+
+export type SaveState = 'loading' | 'saved' | 'unavailable'
 
 export const useProjectStore = defineStore('project', {
   state: () => ({
@@ -14,6 +24,7 @@ export const useProjectStore = defineStore('project', {
     status: '',
     /** Flips once web fonts load so canvases redraw with them. */
     fontsReady: false,
+    saveState: 'loading' as SaveState,
   }),
 
   getters: {
@@ -38,6 +49,69 @@ export const useProjectStore = defineStore('project', {
   },
 
   actions: {
+    /** Restore the last session from browser storage, then autosave every change. */
+    async init() {
+      const assets = useAssetStore()
+      try {
+        const saved = await db.get<string>(SAVE_KEY)
+        if (saved) {
+          const project = normalizeProject(JSON.parse(saved))
+          await assets.restore(projectAssetIds(project))
+          this.project = project
+          this.status = 'Restored your last session.'
+        }
+        lastSaved = JSON.stringify(this.project)
+        this.saveState = 'saved'
+        assets.collectGarbage(projectAssetIds(this.project))
+      } catch {
+        this.saveState = 'unavailable'
+      }
+      this.$subscribe(() => this.scheduleSave(), { detached: true })
+    },
+
+    scheduleSave() {
+      clearTimeout(saveTimer)
+      saveTimer = window.setTimeout(() => this.saveNow(), SAVE_DELAY)
+    },
+
+    async saveNow() {
+      const json = JSON.stringify(this.project)
+      if (json === lastSaved) return
+      try {
+        await db.set(SAVE_KEY, json)
+        lastSaved = json
+        this.saveState = 'saved'
+      } catch {
+        this.saveState = 'unavailable'
+      }
+    },
+
+    /** Replace the slides with a short sample project, keeping size, handle and colour. */
+    newProject() {
+      const { aspect, handle, accent } = this.project
+      this.project = { ...blankProject(), aspect, handle, accent }
+      this.status = 'Started a new project.'
+    },
+
+    async saveProjectFile() {
+      const name = `${projectSlug(this.doc)}.carousel.json`
+      downloadBlob(await writeProjectFile(this.project, assetBlob), name)
+      this.status = `Saved ${name}. Open it here any time to keep editing.`
+    },
+
+    async openProjectFile(file: File) {
+      try {
+        const { project, assets } = await readProjectFile(file)
+        const store = useAssetStore()
+        await Promise.all(Object.entries(assets).map(([id, blob]) => store.add(blob, id).catch(() => {})))
+        const missing = [...projectAssetIds(project)].filter((id) => !store.images[id]).length
+        this.project = project
+        this.status = `Opened ${file.name}.` + (missing ? ` ${missing} image${missing > 1 ? 's' : ''} couldn't be loaded.` : '')
+      } catch (err) {
+        this.status = err instanceof Error ? err.message : `${file.name} couldn't be opened.`
+      }
+    },
+
     slide(id: string): Slide {
       const slide = this.project.slides.find((s) => s.id === id)
       if (!slide) throw new Error(`No slide ${id}`)
