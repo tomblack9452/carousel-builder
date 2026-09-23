@@ -9,3 +9,9 @@ export const SUB_FONT = '"Barlow Condensed", "Arial Narrow", sans-serif'
 export const LOW_RES_SCALE = 1.2
 
 export const JPEG_QUALITY = 0.95
+
+/** Instagram's carousel limit. */
+export const MAX_SLIDES = 20
+
+/** Drag-and-drop type for reordering slides (distinguishes from file drops). */
+export const SLIDE_DRAG_TYPE = 'application/x-carousel-slide'

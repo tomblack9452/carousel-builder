@@ -1,18 +1,19 @@
 <script lang="ts">
 import { defineComponent, type PropType } from 'vue'
 import { mapStores } from 'pinia'
-import { LOW_RES_SCALE } from '../constants'
+import { LOW_RES_SCALE, SLIDE_DRAG_TYPE } from '../constants'
 import { SLIDE_TYPE_ORDER, SLIDE_TYPES, type SlideTypeInfo } from '../model/slideTypes'
 import { slotFrames } from '../render'
 import { fitImage } from '../render/geometry'
 import { useAssetStore } from '../stores/assets'
 import { useProjectStore } from '../stores/project'
 import type { ImageSlot, Slide, SlideType } from '../types'
+import IconButton from './IconButton.vue'
 import SlideCanvas from './SlideCanvas.vue'
 
 export default defineComponent({
   name: 'SlideCard',
-  components: { SlideCanvas },
+  components: { IconButton, SlideCanvas },
   props: {
     slide: { type: Object as PropType<Slide>, required: true },
     index: { type: Number, required: true },
@@ -21,6 +22,8 @@ export default defineComponent({
   data() {
     return {
       dragOver: false,
+      /** Where a slide being dragged onto this card would land. */
+      dropSide: null as 'before' | 'after' | null,
       /** Which image slot the hidden file input is choosing for. */
       pickingSlot: 0,
     }
@@ -63,12 +66,36 @@ export default defineComponent({
       if (file) this.projectStore.setImage(this.slide.id, this.pickingSlot, file)
       input.value = ''
     },
+    onGripDragStart(event: DragEvent) {
+      if (!event.dataTransfer) return
+      event.dataTransfer.setData(SLIDE_DRAG_TYPE, this.slide.id)
+      event.dataTransfer.effectAllowed = 'move'
+      event.dataTransfer.setDragImage(this.$el as HTMLElement, 40, 40)
+    },
     onDragOver(event: DragEvent) {
-      if (!this.takesImage) return
-      event.preventDefault()
-      this.dragOver = true
+      const types = event.dataTransfer?.types ?? []
+      if (types.includes(SLIDE_DRAG_TYPE)) {
+        event.preventDefault()
+        const rect = (this.$el as HTMLElement).getBoundingClientRect()
+        this.dropSide = event.clientX < rect.left + rect.width / 2 ? 'before' : 'after'
+      } else if (types.includes('Files') && this.takesImage) {
+        event.preventDefault()
+        this.dragOver = true
+      }
+    },
+    onDragLeave() {
+      this.dragOver = false
+      this.dropSide = null
     },
     onDrop(event: DragEvent) {
+      const movedId = event.dataTransfer?.getData(SLIDE_DRAG_TYPE)
+      if (movedId) {
+        event.preventDefault()
+        const target = this.index + (this.dropSide === 'after' ? 1 : 0)
+        this.onDragLeave()
+        if (movedId !== this.slide.id) this.projectStore.moveSlide(movedId, target)
+        return
+      }
       if (!this.takesImage) return
       event.preventDefault()
       this.dragOver = false
@@ -97,15 +124,24 @@ export default defineComponent({
 <template>
   <div
     class="card"
-    :class="{ over: dragOver }"
+    :class="{ over: dragOver, 'drop-before': dropSide === 'before', 'drop-after': dropSide === 'after' }"
     @dragover="onDragOver"
-    @dragleave="dragOver = false"
+    @dragleave="onDragLeave"
     @drop="onDrop"
   >
     <SlideCanvas :slide="slide" :index="index" @pick="pickFile" />
 
     <div class="meta">
-      <span>Slide {{ index + 1 }} of {{ total }}</span>
+      <span
+        class="grip"
+        draggable="true"
+        title="Drag to reorder"
+        @dragstart="onGripDragStart"
+        @dragend="onDragLeave"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01" /></svg>
+        Slide {{ index + 1 }} of {{ total }}
+      </span>
       <select :value="slide.type" :aria-label="`Slide ${index + 1} type`" @change="onType">
         <option v-for="opt in typeOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
       </select>
@@ -153,7 +189,31 @@ export default defineComponent({
       <p v-if="info.imageHint" class="hint">{{ info.imageHint }}</p>
     </template>
 
-    <div class="row">
+    <div class="row actions">
+      <IconButton
+        icon="left"
+        :label="`Move slide ${index + 1} earlier`"
+        :disabled="index === 0"
+        @click="projectStore.moveSlide(slide.id, index - 1)"
+      />
+      <IconButton
+        icon="right"
+        :label="`Move slide ${index + 1} later`"
+        :disabled="index === total - 1"
+        @click="projectStore.moveSlide(slide.id, index + 2)"
+      />
+      <IconButton
+        icon="copy"
+        :label="`Duplicate slide ${index + 1}`"
+        :disabled="!projectStore.canAdd"
+        @click="projectStore.duplicateSlide(slide.id)"
+      />
+      <IconButton
+        icon="trash"
+        :label="`Delete slide ${index + 1}`"
+        :disabled="total <= 1"
+        @click="projectStore.removeSlide(slide.id)"
+      />
       <button class="btn" @click="projectStore.downloadSlide(slide.id)">Download</button>
     </div>
   </div>
@@ -166,7 +226,37 @@ export default defineComponent({
   border-radius: 10px;
   padding: 12px;
 }
+.card { position: relative; }
 .card.over { border-color: var(--amber); }
+/* Insertion marker when reordering. */
+.card.drop-before::before, .card.drop-after::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 2px;
+  background: var(--amber);
+}
+.card.drop-before::before { left: -13px; }
+.card.drop-after::after { right: -13px; }
+
+.grip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: grab;
+  user-select: none;
+}
+.grip svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.actions { margin-top: 10px; }
 .card input[type=text], .card textarea { margin-bottom: 6px; }
 .card textarea { min-height: 0; }
 

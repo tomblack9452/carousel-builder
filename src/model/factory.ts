@@ -36,6 +36,11 @@ export function createSampleSlide(type: SlideType): Slide {
   return createSlide(type, SAMPLE_CONTENT[type])
 }
 
+/** Deep copy with a fresh id. Images are shared, which is fine because assets never change. */
+export function cloneSlide(slide: Slide): Slide {
+  return { ...(JSON.parse(JSON.stringify(slide)) as Slide), id: uid() }
+}
+
 /**
  * Switch a slide's type in place, adding image slots if the new type needs more.
  * A slide with no text yet gets the new type's sample text.

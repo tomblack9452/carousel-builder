@@ -2,11 +2,12 @@
 import { defineComponent } from 'vue'
 import { mapStores } from 'pinia'
 import { useProjectStore } from '../stores/project'
+import AddSlideCard from './AddSlideCard.vue'
 import SlideCard from './SlideCard.vue'
 
 export default defineComponent({
   name: 'SlideGrid',
-  components: { SlideCard },
+  components: { AddSlideCard, SlideCard },
   computed: {
     ...mapStores(useProjectStore),
   },
@@ -22,6 +23,7 @@ export default defineComponent({
       :index="index"
       :total="projectStore.project.slides.length"
     />
+    <AddSlideCard />
   </div>
 </template>
 
@@ -30,5 +32,6 @@ export default defineComponent({
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 22px;
+  align-items: start;
 }
 </style>

@@ -47,8 +47,8 @@ export default defineComponent({
       <button class="btn" @click="openBulkPicker">Load images at once</button>
       <input ref="bulk" type="file" accept="image/*" multiple hidden @change="onBulkChange">
       <p class="hint">
-        Files fill the {{ projectStore.imageSlideCount }} image slides in filename order, so name them 01.jpg, 02.jpg
-        and so on. The first one also becomes the cover if it's empty.
+        Files fill the image slides in filename order (name them 01.jpg, 02.jpg and so on), adding slides if
+        needed. The first one also becomes the cover if it's empty.
       </p>
       <button class="btn primary" @click="projectStore.downloadAll()">
         Download all {{ projectStore.project.slides.length }} slides

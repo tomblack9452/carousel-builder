@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
-import { H, W } from '../constants'
+import { H, MAX_SLIDES, W } from '../constants'
 import { downloadBlob, projectSlug, renderToBlob, slideFileName, zipSlides } from '../export/files'
-import { changeSlideType, starterProject } from '../model/factory'
+import { changeSlideType, cloneSlide, createSampleSlide, createSlide, starterProject } from '../model/factory'
 import { SLIDE_TYPES } from '../model/slideTypes'
 import { slotFrames } from '../render'
 import { clamp, fitImage } from '../render/geometry'
@@ -20,8 +20,13 @@ export const useProjectStore = defineStore('project', {
     doc(state): RenderDoc {
       return { project: state.project, images: useAssetStore().images, width: W, height: H }
     },
-    imageSlideCount(state): number {
-      return state.project.slides.filter((s) => s.type === 'image').length
+    canAdd(state): boolean {
+      return state.project.slides.length < MAX_SLIDES
+    },
+    /** Where new slides go: before a trailing call-to-action slide, else at the end. */
+    endOfContent(state): number {
+      const slides = state.project.slides
+      return slides.length && slides[slides.length - 1].type === 'cta' ? slides.length - 1 : slides.length
     },
     /** Required image slots that are still empty. */
     missingCount(state): number {
@@ -47,21 +52,64 @@ export const useProjectStore = defineStore('project', {
       }
     },
 
-    /** Fill image slides in filename order. The first file also fills an empty cover. */
+    /**
+     * Fill image slides in filename order, adding image slides for extra files
+     * while there's room. The first file also fills an empty cover.
+     */
     async loadBulk(files: File[]) {
       const images = files
         .filter((f) => f.type.startsWith('image/'))
         .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
       const targets = this.project.slides.filter((s) => s.type === 'image')
+      while (targets.length < images.length && this.canAdd) {
+        targets.push(this.insertSlide(createSlide('image'), this.endOfContent))
+      }
       const used = images.slice(0, targets.length)
 
       const loads = used.map((file, k) => this.setImage(targets[k].id, 0, file))
       const cover = this.project.slides.find((s) => s.type === 'cover')
       if (cover && !cover.images[0].asset && images[0]) loads.push(this.setImage(cover.id, 0, images[0]))
 
-      const extra = images.length > used.length ? ` Only the first ${used.length} were used.` : ''
-      this.status = `Loaded ${used.length} screenshots.${extra}`
+      const extra = images.length > used.length ? ` Only the first ${used.length} fit (${MAX_SLIDES} slides max).` : ''
+      this.status = `Loaded ${used.length} image${used.length === 1 ? '' : 's'}.${extra}`
       await Promise.all(loads)
+    },
+
+    /** Insert at `index` (clamped). Returns the inserted slide. */
+    insertSlide(slide: Slide, index: number): Slide {
+      const at = clamp(index, 0, this.project.slides.length)
+      this.project.slides.splice(at, 0, slide)
+      return this.project.slides[at]
+    },
+
+    addSlide(type: SlideType) {
+      if (!this.canAdd) return
+      this.insertSlide(createSampleSlide(type), this.endOfContent)
+    },
+
+    duplicateSlide(id: string) {
+      if (!this.canAdd) return
+      const index = this.indexOf(id)
+      this.insertSlide(cloneSlide(this.project.slides[index]), index + 1)
+    },
+
+    removeSlide(id: string) {
+      if (this.project.slides.length <= 1) return
+      this.project.slides.splice(this.indexOf(id), 1)
+    },
+
+    /** Move a slide so it lands before the slide currently at `toIndex` (length = end). */
+    moveSlide(id: string, toIndex: number) {
+      const from = this.indexOf(id)
+      const [slide] = this.project.slides.splice(from, 1)
+      const to = clamp(toIndex > from ? toIndex - 1 : toIndex, 0, this.project.slides.length)
+      this.project.slides.splice(to, 0, slide)
+    },
+
+    indexOf(id: string): number {
+      const index = this.project.slides.findIndex((s) => s.id === id)
+      if (index < 0) throw new Error(`No slide ${id}`)
+      return index
     },
 
     updateSlide(id: string, patch: Partial<Pick<Slide, 'title' | 'body'>>) {
