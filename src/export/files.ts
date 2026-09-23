@@ -40,7 +40,17 @@ export async function zipSlides(doc: RenderDoc): Promise<Blob> {
   }
   const caption = doc.project.caption.trim()
   if (caption) zip.file('caption.txt', caption)
+  const alt = altTextList(doc)
+  if (alt) zip.file('alt-text.txt', alt)
   return zip.generateAsync({ type: 'blob' })
+}
+
+/** "01-cover.jpg: description" per slide that has alt text, for pasting into Instagram. */
+export function altTextList(doc: RenderDoc): string {
+  return doc.project.slides
+    .map((slide, i) => (slide.alt.trim() ? `${slideFileName(slide, i, doc.project.export.format)}: ${slide.alt.trim()}` : ''))
+    .filter(Boolean)
+    .join('\n')
 }
 
 /** Every slide as a page of one PDF (always JPEG inside, at the chosen quality). */

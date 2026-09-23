@@ -268,7 +268,7 @@ export const useProjectStore = defineStore('project', {
       return index
     },
 
-    updateSlide(id: string, patch: Partial<Pick<Slide, 'title' | 'body'>>) {
+    updateSlide(id: string, patch: Partial<Pick<Slide, 'title' | 'body' | 'alt'>>) {
       Object.assign(this.slide(id), patch)
     },
 

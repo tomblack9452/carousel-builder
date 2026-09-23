@@ -120,7 +120,7 @@ export default defineComponent({
     onType(event: Event) {
       this.projectStore.changeType(this.slide.id, (event.target as HTMLSelectElement).value as SlideType)
     },
-    onText(field: 'title' | 'body', event: Event) {
+    onText(field: 'title' | 'body' | 'alt', event: Event) {
       this.projectStore.updateSlide(this.slide.id, { [field]: (event.target as HTMLInputElement).value })
     },
     onZoom(slot: number, event: Event) {
@@ -219,6 +219,17 @@ export default defineComponent({
       <SlideAdjustments v-if="slots.some((s) => s.asset) || slide.type === 'cta'" :slide="slide" :index="index" />
     </template>
 
+    <details class="alt">
+      <summary>Alt text<span v-if="slide.alt.trim()" class="dot" aria-label="(added)" /></summary>
+      <textarea
+        :value="slide.alt"
+        rows="2"
+        placeholder="Describe the slide for people using screen readers"
+        :aria-label="`Slide ${index + 1} alt text`"
+        @input="onText('alt', $event)"
+      />
+    </details>
+
     <div class="row actions">
       <IconButton
         icon="left"
@@ -287,6 +298,10 @@ export default defineComponent({
   stroke-linecap: round;
 }
 .actions { margin-top: 10px; }
+.alt { margin-top: 8px; }
+.alt summary { cursor: pointer; font-weight: 600; font-size: 14px; color: var(--muted); }
+.alt textarea { margin-top: 6px; }
+.dot { display: inline-block; width: 7px; height: 7px; margin-left: 6px; border-radius: 50%; background: var(--amber); }
 .text-pos { gap: 4px; margin: 0 0 6px; }
 .text-pos .sep { width: 1px; align-self: stretch; margin: 4px 4px; background: var(--line); }
 .card input[type=text], .card textarea { margin-bottom: 6px; }

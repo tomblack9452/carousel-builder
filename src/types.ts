@@ -48,6 +48,8 @@ export interface Slide {
   images: ImageSlot[]
   adjust: Adjustments
   text: TextLayout
+  /** Image description for screen readers. */
+  alt: string
 }
 
 export interface Theme {

@@ -35,6 +35,7 @@ function normalizeSlot(raw: unknown): ImageSlot {
 function normalizeSlide(raw: unknown): Slide | null {
   if (!isObject(raw) || typeof raw.type !== 'string' || !(raw.type in SLIDE_TYPES)) return null
   const slide = createSlide(raw.type as Slide['type'], { title: str(raw.title), body: str(raw.body) })
+  slide.alt = str(raw.alt)
   if (Array.isArray(raw.images)) slide.images = raw.images.slice(0, 4).map(normalizeSlot)
   while (slide.images.length < SLIDE_TYPES[slide.type].imageSlots) slide.images.push(createSlot())
   if (isObject(raw.adjust)) {

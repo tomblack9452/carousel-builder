@@ -38,6 +38,7 @@ export function createSlide(type: SlideType, content: Partial<Pick<Slide, 'title
     images: Array.from({ length: SLIDE_TYPES[type].imageSlots }, createSlot),
     adjust: neutralAdjustments(),
     text: { ...DEFAULT_TEXT[type] },
+    alt: '',
   }
 }
 
