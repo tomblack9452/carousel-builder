@@ -34,6 +34,8 @@ export default defineComponent({
       .then(() => this.historyStore.start())
       .then(() => this.projectStore.openSharedFromUrl())
     window.addEventListener('keydown', this.onKeydown)
+    // Editor text on canvases (drop prompts) uses the UI font: redraw once it arrives.
+    document.fonts.addEventListener('loadingdone', this.onFontsLoaded)
   },
   watch: {
     // Canvas text only uses a web font once it's loaded, so load the chosen pair and redraw.
@@ -46,8 +48,12 @@ export default defineComponent({
   },
   unmounted() {
     window.removeEventListener('keydown', this.onKeydown)
+    document.fonts.removeEventListener('loadingdone', this.onFontsLoaded)
   },
   methods: {
+    onFontsLoaded() {
+      this.projectStore.fontsVersion++
+    },
     openPreview() {
       (this.$refs.preview as InstanceType<typeof PhonePreview>).open()
     },
