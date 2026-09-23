@@ -9,6 +9,7 @@ import { useAssetStore } from '../stores/assets'
 import { useProjectStore } from '../stores/project'
 import type { Align, Anchor, ImageSlot, Slide, SlideType } from '../types'
 import IconButton, { type IconName } from './IconButton.vue'
+import SlideAdjustments from './SlideAdjustments.vue'
 import SlideCanvas from './SlideCanvas.vue'
 
 const ALIGNS: { value: Align; icon: IconName; label: string }[] = [
@@ -20,7 +21,7 @@ const ANCHORS: { value: Anchor }[] = [{ value: 'top' }, { value: 'middle' }, { v
 
 export default defineComponent({
   name: 'SlideCard',
-  components: { IconButton, SlideCanvas },
+  components: { IconButton, SlideAdjustments, SlideCanvas },
   props: {
     slide: { type: Object as PropType<Slide>, required: true },
     index: { type: Number, required: true },
@@ -216,6 +217,7 @@ export default defineComponent({
         </button>
       </div>
       <p v-if="info.imageHint" class="hint">{{ info.imageHint }}</p>
+      <SlideAdjustments v-if="slots.some((s) => s.asset) || slide.type === 'cta'" :slide="slide" :index="index" />
     </template>
 
     <div class="row actions">

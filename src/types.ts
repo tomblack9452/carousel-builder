@@ -25,6 +25,18 @@ export interface TextLayout {
   y: number
 }
 
+/** Per-slide image adjustments. Neutral values leave the image untouched. */
+export interface Adjustments {
+  /** 1 = unchanged, 0.5 to 1.5. */
+  brightness: number
+  /** 1 = unchanged, 0 (greyscale) to 2. */
+  saturation: number
+  /** -1 (cool) to 1 (warm). */
+  warmth: number
+  /** 0 to 1. */
+  vignette: number
+}
+
 export interface Slide {
   id: string
   type: SlideType
@@ -34,6 +46,7 @@ export interface Slide {
   body: string
   /** At least as many as the type uses. Extra slots are kept so switching type back restores them. */
   images: ImageSlot[]
+  adjust: Adjustments
   text: TextLayout
 }
 

@@ -24,7 +24,7 @@ export function drawCta(ctx: Ctx, slide: Slide, doc: RenderDoc): Rect | null {
     ctx.translate(W / 2, H / 2)
     ctx.scale(1.12, 1.12)
     ctx.translate(-W / 2, -H / 2)
-    drawSlot(ctx, img, slot, { x: 0, y: 0, w: W, h: H })
+    drawSlot(ctx, img, slot, { x: 0, y: 0, w: W, h: H }, slide.adjust)
     ctx.restore()
   } else {
     fillBackground(ctx, doc)

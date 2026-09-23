@@ -3,7 +3,9 @@ import { ASPECTS, MAX_SLIDES } from '../constants'
 import { downloadBlob, projectSlug, renderToBlob, slideFileName, zipSlides } from '../export/files'
 import { fontPair } from '../fonts/catalog'
 import { loadFontPair } from '../fonts/loader'
-import { blankProject, changeSlideType, cloneSlide, createSampleSlide, createSlide, starterProject } from '../model/factory'
+import {
+  blankProject, changeSlideType, cloneSlide, createSampleSlide, createSlide, neutralAdjustments, starterProject,
+} from '../model/factory'
 import { normalizeProject, projectAssetIds } from '../model/normalize'
 import { SLIDE_TYPES } from '../model/slideTypes'
 import { db } from '../persist/db'
@@ -11,7 +13,7 @@ import { readProjectFile, writeProjectFile } from '../persist/projectFile'
 import { slotFrames } from '../render'
 import { clamp, fitImage } from '../render/geometry'
 import { alignX, layoutFromBox, snapY } from '../model/textLayout'
-import type { Align, Anchor, ImageSlot, Rect, RenderDoc, Slide, SlideType } from '../types'
+import type { Adjustments, Align, Anchor, ImageSlot, Rect, RenderDoc, Slide, SlideType } from '../types'
 import { assetBlob, useAssetStore } from './assets'
 
 const SAVE_KEY = 'project'
@@ -206,6 +208,14 @@ export const useProjectStore = defineStore('project', {
 
     updateSlot(id: string, slotIndex: number, patch: Partial<ImageSlot>) {
       Object.assign(this.slide(id).images[slotIndex], patch)
+    },
+
+    updateAdjust(id: string, patch: Partial<Adjustments>) {
+      Object.assign(this.slide(id).adjust, patch)
+    },
+
+    resetAdjust(id: string) {
+      this.slide(id).adjust = neutralAdjustments()
     },
 
     setTextAlign(id: string, align: Align) {

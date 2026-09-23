@@ -1,4 +1,4 @@
-import type { ImageSlot, Project, Slide, SlideType, Theme } from '../types'
+import type { Adjustments, ImageSlot, Project, Slide, SlideType, Theme } from '../types'
 import { PRESETS, presetTheme } from './presets'
 import { DEFAULT_TEXT } from './textLayout'
 import { SLIDE_TYPES } from './slideTypes'
@@ -11,6 +11,10 @@ export function uid(): string {
 
 export function createSlot(): ImageSlot {
   return { asset: null, zoom: 1, px: 0, py: 0 }
+}
+
+export function neutralAdjustments(): Adjustments {
+  return { brightness: 1, saturation: 1, warmth: 0, vignette: 0 }
 }
 
 /** Sample text for a freshly added slide, so it's obvious what each field does. */
@@ -31,6 +35,7 @@ export function createSlide(type: SlideType, content: Partial<Pick<Slide, 'title
     title: content.title ?? '',
     body: content.body ?? '',
     images: Array.from({ length: SLIDE_TYPES[type].imageSlots }, createSlot),
+    adjust: neutralAdjustments(),
     text: { ...DEFAULT_TEXT[type] },
   }
 }

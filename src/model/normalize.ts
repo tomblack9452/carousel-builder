@@ -37,6 +37,15 @@ function normalizeSlide(raw: unknown): Slide | null {
   const slide = createSlide(raw.type as Slide['type'], { title: str(raw.title), body: str(raw.body) })
   if (Array.isArray(raw.images)) slide.images = raw.images.slice(0, 4).map(normalizeSlot)
   while (slide.images.length < SLIDE_TYPES[slide.type].imageSlots) slide.images.push(createSlot())
+  if (isObject(raw.adjust)) {
+    const a = raw.adjust
+    slide.adjust = {
+      brightness: num(a.brightness, 1, 0.5, 1.5),
+      saturation: num(a.saturation, 1, 0, 2),
+      warmth: num(a.warmth, 0, -1, 1),
+      vignette: num(a.vignette, 0, 0, 1),
+    }
+  }
   if (isObject(raw.text)) {
     const t = raw.text
     const d = slide.text

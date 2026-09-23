@@ -1,6 +1,6 @@
 import { SUB_FONT } from '../constants'
 import { fontPair, stack } from '../fonts/catalog'
-import type { Anchor, ImageSlot, Rect, RenderDoc, Slide } from '../types'
+import type { Adjustments, Anchor, ImageSlot, Rect, RenderDoc, Slide } from '../types'
 import { fitImage } from './geometry'
 
 export type Ctx = CanvasRenderingContext2D
@@ -30,15 +30,50 @@ export function slotImage(doc: RenderDoc, slot: ImageSlot | undefined): HTMLImag
   return slot?.asset ? doc.images[slot.asset] ?? null : null
 }
 
-/** Draw an image cover-fitted, zoomed and panned inside `frame`, clipped to it. */
-export function drawSlot(ctx: Ctx, img: HTMLImageElement, slot: ImageSlot, frame: Rect): void {
+const WARM = '#ff8a3c'
+const COOL = '#3c8cff'
+
+/**
+ * Draw an image cover-fitted, zoomed and panned inside `frame`, clipped to it,
+ * with the slide's adjustments. Any filter already set on ctx (e.g. a blur) is kept.
+ */
+export function drawSlot(ctx: Ctx, img: HTMLImageElement, slot: ImageSlot, frame: Rect, adjust?: Adjustments): void {
   const { width, height, marginX, marginY } = fitImage(img, slot.zoom, frame.w, frame.h)
   ctx.save()
   ctx.beginPath()
   ctx.rect(frame.x, frame.y, frame.w, frame.h)
   ctx.clip()
+  if (adjust && (adjust.brightness !== 1 || adjust.saturation !== 1)) {
+    const base = ctx.filter === 'none' ? '' : ctx.filter + ' '
+    ctx.filter = `${base}brightness(${adjust.brightness}) saturate(${adjust.saturation})`
+  }
   ctx.drawImage(img, frame.x - marginX + slot.px * marginX, frame.y - marginY + slot.py * marginY, width, height)
+  ctx.filter = 'none'
+  if (adjust) tint(ctx, frame, adjust)
   ctx.restore()
+}
+
+/** Warmth as a soft-light colour wash, vignette as darkened edges. */
+function tint(ctx: Ctx, frame: Rect, adjust: Adjustments): void {
+  const { x, y, w, h } = frame
+  if (adjust.warmth) {
+    ctx.save()
+    ctx.globalCompositeOperation = 'soft-light'
+    ctx.globalAlpha = Math.abs(adjust.warmth) * 0.6
+    ctx.fillStyle = adjust.warmth > 0 ? WARM : COOL
+    ctx.fillRect(x, y, w, h)
+    ctx.restore()
+  }
+  if (adjust.vignette) {
+    const cx = x + w / 2
+    const cy = y + h / 2
+    const outer = Math.hypot(w, h) / 2
+    const g = ctx.createRadialGradient(cx, cy, outer * 0.35, cx, cy, outer)
+    g.addColorStop(0, 'rgba(0,0,0,0)')
+    g.addColorStop(1, `rgba(0,0,0,${adjust.vignette * 0.85})`)
+    ctx.fillStyle = g
+    ctx.fillRect(x, y, w, h)
+  }
 }
 
 export function fullFrame(ctx: Ctx): Rect {
@@ -60,7 +95,7 @@ export function drawBackground(
 ): boolean {
   const slot = slide.images[slotIndex]
   const img = slotImage(doc, slot)
-  if (img) drawSlot(ctx, img, slot, frame)
+  if (img) drawSlot(ctx, img, slot, frame, slide.adjust)
   else if (emptyText) placeholder(ctx, emptyText, frame)
   else fillBackground(ctx, doc, frame)
   return !!img
