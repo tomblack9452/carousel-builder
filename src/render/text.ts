@@ -1,6 +1,6 @@
 import type { Rect } from '../types'
 import { clamp } from './geometry'
-import type { Ctx } from './draw'
+import { type Ctx, rgba } from './draw'
 import type { Face, TypeStyle } from './style'
 
 /** Keep text blocks at least this far from the slide edges. */
@@ -44,12 +44,13 @@ export function setFont(ctx: Ctx, face: Face, size: number): void {
 }
 
 export function titleLine(ts: TypeStyle, text: string, size: number, gapBefore = 0): TextLine {
-  return { segments: [{ text }], face: ts.heading, size, color: '#fff', lineHeight: 1.05, style: 'title', gapBefore }
+  return { segments: [{ text }], face: ts.heading, size, color: ts.text, lineHeight: 1.05, style: 'title', gapBefore }
 }
 
 export interface BodyOptions {
   gapBefore?: number
-  color?: string
+  /** Opacity of the theme text colour. */
+  alpha?: number
   bold?: boolean
 }
 
@@ -58,7 +59,7 @@ export function bodyLine(ts: TypeStyle, text: string, size: number, opts: BodyOp
     segments: [{ text }],
     face: opts.bold === false ? ts.body : ts.bodyBold,
     size,
-    color: opts.color ?? 'rgba(255,255,255,.9)',
+    color: rgba(ts.text, opts.alpha ?? 0.9),
     lineHeight: 1.25,
     style: 'body',
     gapBefore: opts.gapBefore ?? 0,
@@ -144,7 +145,7 @@ export function blockHeight(lines: TextLine[]): number {
 }
 
 /** Draw lines as one block, kept inside the safe area. Returns the block's bounds. */
-export function drawTextBlock(ctx: Ctx, lines: TextLine[], place: Placement, accent: string): Rect | null {
+export function drawTextBlock(ctx: Ctx, lines: TextLine[], place: Placement, ts: TypeStyle): Rect | null {
   if (!lines.length) return null
   const { width: W, height: H } = ctx.canvas
   const widths = lines.map((l) => lineWidth(ctx, l))
@@ -170,7 +171,7 @@ export function drawTextBlock(ctx: Ctx, lines: TextLine[], place: Placement, acc
     let x = place.align === 'left' ? left : place.align === 'center' ? left + (width - widths[i]) / 2 : left + width - widths[i]
     x += line.indent ?? 0
     for (const seg of line.segments) {
-      drawRun(ctx, seg.text, x, baseline, line, seg.color ?? line.color, accent)
+      drawRun(ctx, seg.text, x, baseline, line, seg.color ?? line.color, ts)
       x += seg.width ?? ctx.measureText(seg.text).width
     }
     y += box
@@ -179,13 +180,22 @@ export function drawTextBlock(ctx: Ctx, lines: TextLine[], place: Placement, acc
   return { x: left, y: top, w: width, h: height }
 }
 
-function drawRun(ctx: Ctx, text: string, x: number, y: number, line: TextLine, color: string, accent: string): void {
-  if (line.style === 'title') {
+function drawRun(ctx: Ctx, text: string, x: number, y: number, line: TextLine, color: string, ts: TypeStyle): void {
+  if (line.style === 'title' && ts.titleEffect === 'hard') {
     const offset = Math.max(3, Math.round(line.size * 0.06))
-    ctx.fillStyle = accent
+    ctx.fillStyle = ts.accent
     ctx.fillText(text, x + offset, y + offset)
     ctx.fillStyle = color
     ctx.fillText(text, x, y)
+  } else if (line.style === 'title' && ts.titleEffect === 'glow') {
+    ctx.save()
+    ctx.shadowColor = ts.accent
+    ctx.shadowBlur = line.size * 0.35
+    ctx.fillStyle = color
+    // Two passes build a stronger glow.
+    ctx.fillText(text, x, y)
+    ctx.fillText(text, x, y)
+    ctx.restore()
   } else {
     ctx.save()
     ctx.shadowColor = 'rgba(0,0,0,.45)'

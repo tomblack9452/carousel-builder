@@ -35,7 +35,17 @@ export interface Theme {
   uppercase: boolean
   /** Title shadow and highlight colour. */
   accent: string
+  text: string
+  /** Behind slides with no image. */
+  background: string
+  /** Colour of the darkening gradient over images. */
+  overlay: string
+  /** Multiplier on each slide type's overlay opacity. 0 = none. */
+  overlayStrength: number
+  titleEffect: TitleEffect
 }
+
+export type TitleEffect = 'hard' | 'glow' | 'none'
 
 export interface Project {
   aspect: AspectId

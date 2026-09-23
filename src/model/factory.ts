@@ -1,5 +1,5 @@
-import { DEFAULT_FONT_PAIR } from '../fonts/catalog'
 import type { ImageSlot, Project, Slide, SlideType, Theme } from '../types'
+import { PRESETS, presetTheme } from './presets'
 import { SLIDE_TYPES } from './slideTypes'
 
 export function uid(): string {
@@ -67,15 +67,7 @@ export function blankProject(): Project {
 }
 
 export function defaultTheme(): Theme {
-  return {
-    fontPair: DEFAULT_FONT_PAIR,
-    headingWeight: 400,
-    headingScale: 1,
-    bodyScale: 1,
-    letterSpacing: 0,
-    uppercase: true,
-    accent: '#ff7a3d',
-  }
+  return presetTheme(PRESETS[0].id)
 }
 
 /** The project a first-time visitor starts with. */

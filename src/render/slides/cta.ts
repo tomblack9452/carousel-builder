@@ -1,5 +1,5 @@
 import type { ImageSlot, RenderDoc, Slide } from '../../types'
-import { type Ctx, drawHandle, drawSlot, slotImage } from '../draw'
+import { type Ctx, drawHandle, drawSlot, fillBackground, slotImage } from '../draw'
 import { typeStyle } from '../style'
 import { type TextLine, bodyLines, drawTextBlock, headingLines } from '../text'
 
@@ -27,8 +27,7 @@ export function drawCta(ctx: Ctx, slide: Slide, doc: RenderDoc): void {
     drawSlot(ctx, img, slot, { x: 0, y: 0, w: W, h: H })
     ctx.restore()
   } else {
-    ctx.fillStyle = '#2a2540'
-    ctx.fillRect(0, 0, W, H)
+    fillBackground(ctx, doc)
   }
 
   const lines: TextLine[] = []
@@ -38,7 +37,7 @@ export function drawCta(ctx: Ctx, slide: Slide, doc: RenderDoc): void {
   if (body) {
     lines.push(...bodyLines(ctx, ts, body, W - 240, { start: 48, min: 30, step: 4, maxLines: 2, gapBefore: lines.length ? 24 : 0 }))
   }
-  drawTextBlock(ctx, lines, { align: 'center', anchor: 'middle', x: W / 2, y: H * 0.47 }, ts.accent)
+  drawTextBlock(ctx, lines, { align: 'center', anchor: 'middle', x: W / 2, y: H * 0.47 }, ts)
 
   drawHandle(ctx, doc, 'center', W / 2, H - 90, 36, 0.9)
 }

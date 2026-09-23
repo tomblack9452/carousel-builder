@@ -18,7 +18,7 @@ html, body {
   line-height: 1.45;
 }
 
-label { display: block; font-weight: 600; margin: 16px 0 6px; }
+label, .field-label { display: block; font-weight: 600; margin: 16px 0 6px; }
 
 input[type=text], textarea {
   width: 100%;

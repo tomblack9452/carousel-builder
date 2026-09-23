@@ -1,5 +1,5 @@
 import { fontPair, nearestWeight, stack } from '../fonts/catalog'
-import type { RenderDoc } from '../types'
+import type { RenderDoc, TitleEffect } from '../types'
 
 export interface Face {
   family: string
@@ -16,6 +16,8 @@ export interface TypeStyle {
   headingScale: number
   bodyScale: number
   accent: string
+  text: string
+  titleEffect: TitleEffect
   /** Applies the uppercase setting to heading text. */
   caps: (text: string) => string
 }
@@ -35,6 +37,8 @@ export function typeStyle(doc: RenderDoc): TypeStyle {
     headingScale: theme.headingScale,
     bodyScale: theme.bodyScale,
     accent: theme.accent,
+    text: theme.text,
+    titleEffect: theme.titleEffect,
     caps: theme.uppercase ? (t) => t.toUpperCase() : (t) => t,
   }
 }

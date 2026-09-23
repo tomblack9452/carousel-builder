@@ -5,10 +5,25 @@ import { fitImage } from './geometry'
 
 export type Ctx = CanvasRenderingContext2D
 
-const EMPTY_BG = '#2a2540'
+/** Editor-only colours for empty image drop zones (never part of a finished slide). */
+const PROMPT_BG = '#2a2540'
+const PROMPT_TEXT = '#a59fb8'
 
 export function font(weight: number | '', size: number, family: string): string {
   return `${weight ? weight + ' ' : ''}${size}px ${family}`
+}
+
+/** '#rrggbb' + alpha → 'rgba(…)'. */
+export function rgba(hex: string, alpha: number): string {
+  const n = parseInt(hex.slice(1), 16)
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`
+}
+
+/** Whether dark text reads better than light text on this colour. */
+export function isLight(hex: string): boolean {
+  const n = parseInt(hex.slice(1), 16)
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255]
+  return 0.299 * r + 0.587 * g + 0.114 * b > 160
 }
 
 export function slotImage(doc: RenderDoc, slot: ImageSlot | undefined): HTMLImageElement | null {
@@ -30,9 +45,14 @@ export function fullFrame(ctx: Ctx): Rect {
   return { x: 0, y: 0, w: ctx.canvas.width, h: ctx.canvas.height }
 }
 
+export function fillBackground(ctx: Ctx, doc: RenderDoc, frame = fullFrame(ctx)): void {
+  ctx.fillStyle = doc.project.theme.background
+  ctx.fillRect(frame.x, frame.y, frame.w, frame.h)
+}
+
 /**
  * Draw a slot's image into its frame. When it's empty, show `emptyText` as a
- * drop prompt, or a plain background if the image is optional (null).
+ * drop prompt, or the theme background if the image is optional (null).
  * Returns whether an image was drawn.
  */
 export function drawBackground(
@@ -42,37 +62,39 @@ export function drawBackground(
   const img = slotImage(doc, slot)
   if (img) drawSlot(ctx, img, slot, frame)
   else if (emptyText) placeholder(ctx, emptyText, frame)
-  else {
-    ctx.fillStyle = EMPTY_BG
-    ctx.fillRect(frame.x, frame.y, frame.w, frame.h)
-  }
+  else fillBackground(ctx, doc, frame)
   return !!img
 }
 
 export function placeholder(ctx: Ctx, text: string, frame = fullFrame(ctx)): void {
   const { x, y, w, h } = frame
-  ctx.fillStyle = EMPTY_BG
+  ctx.fillStyle = PROMPT_BG
   ctx.fillRect(x, y, w, h)
-  ctx.fillStyle = '#a59fb8'
+  ctx.fillStyle = PROMPT_TEXT
   ctx.font = font(600, 52, SUB_FONT)
   ctx.textAlign = 'center'
   ctx.fillText(text, x + w / 2, y + h / 2)
   ctx.textAlign = 'left'
 }
 
-/** Dark gradient from `from` (fraction of height) to the bottom edge, for text legibility. */
-export function shade(ctx: Ctx, from: number, alpha: number): void {
+function overlayAlpha(doc: RenderDoc, alpha: number): number {
+  return Math.min(1, alpha * doc.project.theme.overlayStrength)
+}
+
+/** Gradient in the overlay colour from `from` (fraction of height) to the bottom edge, for text legibility. */
+export function shade(ctx: Ctx, doc: RenderDoc, from: number, alpha: number): void {
   const { width: W, height: H } = ctx.canvas
+  const colour = doc.project.theme.overlay
   const g = ctx.createLinearGradient(0, H * from, 0, H)
-  g.addColorStop(0, 'rgba(18,10,28,0)')
-  g.addColorStop(1, `rgba(18,10,28,${alpha})`)
+  g.addColorStop(0, rgba(colour, 0))
+  g.addColorStop(1, rgba(colour, overlayAlpha(doc, alpha)))
   ctx.fillStyle = g
   ctx.fillRect(0, H * from, W, H * (1 - from))
 }
 
-/** Flat dark wash over the whole slide. */
-export function dim(ctx: Ctx, alpha: number): void {
-  ctx.fillStyle = `rgba(18,10,28,${alpha})`
+/** Flat wash of the overlay colour over the whole slide. */
+export function dim(ctx: Ctx, doc: RenderDoc, alpha: number): void {
+  ctx.fillStyle = rgba(doc.project.theme.overlay, overlayAlpha(doc, alpha))
   ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
 }
 
@@ -86,7 +108,7 @@ export function drawHandle(
   const pair = fontPair(doc.project.theme.fontPair)
   ctx.font = font(Math.max(...pair.body.weights), size, stack(pair.body))
   ctx.textAlign = align
-  ctx.fillStyle = `rgba(255,255,255,${alpha})`
+  ctx.fillStyle = rgba(doc.project.theme.text, alpha)
   ctx.shadowColor = 'rgba(0,0,0,.55)'
   ctx.shadowBlur = 8
   ctx.fillText(text, x, y)

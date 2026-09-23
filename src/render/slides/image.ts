@@ -7,7 +7,7 @@ export function drawImage(ctx: Ctx, slide: Slide, doc: RenderDoc): void {
   const { width: W, height: H } = doc
   const ts = typeStyle(doc)
   drawBackground(ctx, doc, slide, 0, 'Drop a screenshot here')
-  shade(ctx, 0.55, 0.75)
+  shade(ctx, doc, 0.55, 0.75)
 
   const lines: TextLine[] = []
   const title = slide.title.trim()
@@ -15,10 +15,10 @@ export function drawImage(ctx: Ctx, slide: Slide, doc: RenderDoc): void {
   const body = slide.body.trim()
   if (body) {
     lines.push(...bodyLines(ctx, ts, body, W - 170, {
-      start: 38, min: 28, maxLines: 2, gapBefore: lines.length ? 6 : 0, color: 'rgba(255,255,255,.88)',
+      start: 38, min: 28, maxLines: 2, gapBefore: lines.length ? 6 : 0, alpha: 0.88,
     }))
   }
-  drawTextBlock(ctx, lines, { align: 'left', anchor: 'bottom', x: 80, y: H - 70 }, ts.accent)
+  drawTextBlock(ctx, lines, { align: 'left', anchor: 'bottom', x: 80, y: H - 70 }, ts)
 
   drawHandle(ctx, doc, 'right', W - 60, 80, 30, 0.75)
 }

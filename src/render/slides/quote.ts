@@ -6,7 +6,7 @@ import { type TextLine, bodyLines, drawTextBlock, headingLines, titleLine } from
 export function drawQuote(ctx: Ctx, slide: Slide, doc: RenderDoc): void {
   const { width: W, height: H } = doc
   const ts = typeStyle(doc)
-  if (drawBackground(ctx, doc, slide, 0, null)) dim(ctx, 0.6)
+  if (drawBackground(ctx, doc, slide, 0, null)) dim(ctx, doc, 0.6)
 
   const lines: TextLine[] = []
   const quote = slide.title.trim()
@@ -20,10 +20,10 @@ export function drawQuote(ctx: Ctx, slide: Slide, doc: RenderDoc): void {
   const by = slide.body.trim()
   if (by) {
     lines.push(...bodyLines(ctx, ts, `— ${by}`, W - 240, {
-      start: 42, min: 28, maxLines: 2, gapBefore: lines.length ? 36 : 0, color: 'rgba(255,255,255,.8)',
+      start: 42, min: 28, maxLines: 2, gapBefore: lines.length ? 36 : 0, alpha: 0.8,
     }))
   }
-  drawTextBlock(ctx, lines, { align: 'center', anchor: 'middle', x: W / 2, y: H / 2 }, ts.accent)
+  drawTextBlock(ctx, lines, { align: 'center', anchor: 'middle', x: W / 2, y: H / 2 }, ts)
 
   drawHandle(ctx, doc, 'center', W / 2, H - 80, 32, 0.8)
 }

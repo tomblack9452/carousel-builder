@@ -1,5 +1,5 @@
 import type { Rect, RenderDoc, Slide } from '../../types'
-import { type Ctx, drawBackground, drawHandle } from '../draw'
+import { type Ctx, drawBackground, drawHandle, isLight } from '../draw'
 import { type TypeStyle, typeStyle } from '../style'
 import { drawTextBlock, headingLines, setFont } from '../text'
 
@@ -21,7 +21,7 @@ function drawTag(ctx: Ctx, ts: TypeStyle, text: string, x: number, y: number): v
   ctx.beginPath()
   ctx.roundRect(x, y, w, h, h / 2)
   ctx.fill()
-  ctx.fillStyle = '#fff'
+  ctx.fillStyle = isLight(ts.accent) ? '#111' : '#fff'
   ctx.textBaseline = 'middle'
   ctx.fillText(text, x + padX, y + h / 2 + 2)
   ctx.restore()
@@ -35,7 +35,7 @@ export function drawCompare(ctx: Ctx, slide: Slide, doc: RenderDoc): void {
   frames.forEach((frame, i) => drawBackground(ctx, doc, slide, i, prompts[i], frame))
 
   // Divider along the seam.
-  ctx.fillStyle = '#fff'
+  ctx.fillStyle = ts.text
   ctx.fillRect(0, H / 2 - 3, W, 6)
 
   const labels = slide.body.split('\n').map((l) => l.trim()).filter(Boolean)
@@ -46,7 +46,7 @@ export function drawCompare(ctx: Ctx, slide: Slide, doc: RenderDoc): void {
   const title = slide.title.trim()
   if (title) {
     const lines = headingLines(ctx, ts, title, W - 160, { start: 120, min: 56, step: 4, maxLines: 2 })
-    drawTextBlock(ctx, lines, { align: 'center', anchor: 'middle', x: W / 2, y: H / 2 }, ts.accent)
+    drawTextBlock(ctx, lines, { align: 'center', anchor: 'middle', x: W / 2, y: H / 2 }, ts)
   }
 
   drawHandle(ctx, doc, 'right', W - 60, 80, 30, 0.75)

@@ -22,7 +22,7 @@ function itemLines(ctx: Ctx, ts: TypeStyle, items: string[], size: number, maxWi
 export function drawList(ctx: Ctx, slide: Slide, doc: RenderDoc): void {
   const { width: W, height: H } = doc
   const ts = typeStyle(doc)
-  if (drawBackground(ctx, doc, slide, 0, null)) dim(ctx, 0.6)
+  if (drawBackground(ctx, doc, slide, 0, null)) dim(ctx, doc, 0.6)
 
   const lines: TextLine[] = []
   const title = slide.title.trim()
@@ -41,7 +41,7 @@ export function drawList(ctx: Ctx, slide: Slide, doc: RenderDoc): void {
     if (lines.length) body[0].gapBefore = 40
     lines.push(...body)
   }
-  drawTextBlock(ctx, lines, { align: 'left', anchor: 'middle', x: 80, y: H / 2 }, ts.accent)
+  drawTextBlock(ctx, lines, { align: 'left', anchor: 'middle', x: 80, y: H / 2 }, ts)
 
   drawHandle(ctx, doc, 'right', W - 60, 80, 30, 0.75)
 }

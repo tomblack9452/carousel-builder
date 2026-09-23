@@ -2,6 +2,7 @@
 import { defineComponent } from 'vue'
 import { mapStores } from 'pinia'
 import { FONT_PAIRS, type FontPair, fontPair, nearestWeight, stack } from '../../fonts/catalog'
+import { PRESETS, matchingPreset, presetTheme } from '../../model/presets'
 import { useProjectStore } from '../../stores/project'
 import type { Theme } from '../../types'
 import SidebarSection from './SidebarSection.vue'
@@ -14,12 +15,15 @@ export default defineComponent({
   name: 'StylePanel',
   components: { SidebarSection },
   data() {
-    return { FONT_PAIRS }
+    return { FONT_PAIRS, PRESETS }
   },
   computed: {
     ...mapStores(useProjectStore),
     theme(): Theme {
       return this.projectStore.project.theme
+    },
+    activePreset(): string | null {
+      return matchingPreset(this.theme)
     },
     pair(): FontPair {
       return fontPair(this.theme.fontPair)
@@ -44,7 +48,10 @@ export default defineComponent({
     },
   },
   methods: {
-    setNumber(key: 'headingWeight' | 'headingScale' | 'bodyScale' | 'letterSpacing', event: Event) {
+    applyPreset(id: string) {
+      this.projectStore.project.theme = presetTheme(id)
+    },
+    setNumber(key: 'headingWeight' | 'headingScale' | 'bodyScale' | 'letterSpacing' | 'overlayStrength', event: Event) {
       this.theme[key] = Number((event.target as HTMLInputElement).value)
     },
     percent(value: number): string {
@@ -56,6 +63,25 @@ export default defineComponent({
 
 <template>
   <SidebarSection title="Style">
+    <p class="field-label">Presets</p>
+    <div class="presets">
+      <button
+        v-for="p in PRESETS"
+        :key="p.id"
+        type="button"
+        class="preset"
+        :class="{ active: activePreset === p.id }"
+        :aria-pressed="activePreset === p.id"
+        @click="applyPreset(p.id)"
+      >
+        <span class="swatch" :style="{ background: p.theme.background }">
+          <span :style="{ background: p.theme.accent }" />
+          <span :style="{ background: p.theme.text }" />
+        </span>
+        {{ p.label }}
+      </button>
+    </div>
+
     <label for="handle">Your handle</label>
     <input id="handle" v-model="projectStore.project.handle" type="text">
 
@@ -98,9 +124,38 @@ export default defineComponent({
       Uppercase headings
     </label>
 
-    <label for="accent">Accent colour</label>
-    <input id="accent" v-model="theme.accent" type="color">
-    <p class="hint">Used for title shadows, list numbers and labels.</p>
+    <div class="colours">
+      <label>
+        <input v-model="theme.accent" type="color">
+        Accent
+      </label>
+      <label>
+        <input v-model="theme.text" type="color">
+        Text
+      </label>
+      <label>
+        <input v-model="theme.background" type="color">
+        Background
+      </label>
+      <label>
+        <input v-model="theme.overlay" type="color">
+        Overlay
+      </label>
+    </div>
+    <p class="hint">Accent colours title effects, list numbers and labels. Background shows on slides without an image.</p>
+
+    <label for="titleEffect">Title effect</label>
+    <select id="titleEffect" v-model="theme.titleEffect">
+      <option value="hard">Hard shadow</option>
+      <option value="glow">Glow</option>
+      <option value="none">None</option>
+    </select>
+
+    <label for="overlayStrength">Image overlay <span class="value">{{ percent(theme.overlayStrength) }}</span></label>
+    <input
+      id="overlayStrength" type="range" min="0" max="1.5" step="0.05"
+      :value="theme.overlayStrength" @input="setNumber('overlayStrength', $event)"
+    >
   </SidebarSection>
 </template>
 
@@ -109,6 +164,31 @@ select, input[type=range] { width: 100%; }
 .value { float: right; font-weight: 400; color: var(--muted); }
 .check { display: flex; align-items: center; gap: 8px; font-weight: 600; }
 .check input { accent-color: var(--amber); width: 16px; height: 16px; margin: 0; }
+.presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.preset {
+  display: grid;
+  justify-items: start;
+  gap: 5px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--dusk);
+  color: var(--text);
+  font: 600 13px Barlow, sans-serif;
+  cursor: pointer;
+}
+.preset:hover { border-color: var(--muted); }
+.preset.active { border-color: var(--amber); }
+.swatch {
+  display: flex;
+  gap: 3px;
+  width: 100%;
+  padding: 6px;
+  border-radius: 4px;
+}
+.swatch span { width: 12px; height: 12px; border-radius: 50%; }
+.colours { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; margin-top: 14px; }
+.colours label { display: flex; align-items: center; gap: 8px; margin: 0; font-weight: 600; }
 .preview {
   display: grid;
   gap: 2px;

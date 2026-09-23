@@ -52,6 +52,11 @@ function normalizeTheme(raw: unknown, legacyAccent: unknown): Theme {
     uppercase: typeof t.uppercase === 'boolean' ? t.uppercase : d.uppercase,
     // Early saves kept the accent at the top level.
     accent: colour(t.accent ?? legacyAccent, d.accent),
+    text: colour(t.text, d.text),
+    background: colour(t.background, d.background),
+    overlay: colour(t.overlay, d.overlay),
+    overlayStrength: num(t.overlayStrength, d.overlayStrength, 0, 1.5),
+    titleEffect: t.titleEffect === 'glow' || t.titleEffect === 'none' ? t.titleEffect : d.titleEffect,
   }
 }
 
