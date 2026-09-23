@@ -13,6 +13,7 @@ import { db } from '../persist/db'
 import { readProjectFile, writeProjectFile } from '../persist/projectFile'
 import { slotFrames } from '../render'
 import { clamp, fitImage } from '../render/geometry'
+import { paletteFromImage } from '../render/palette'
 import { alignX, layoutFromBox, snapY } from '../model/textLayout'
 import type { Adjustments, Align, Anchor, BrandKit, ImageSlot, Rect, RenderDoc, Slide, SlideType } from '../types'
 import { assetBlob, useAssetStore } from './assets'
@@ -110,6 +111,26 @@ export const useProjectStore = defineStore('project', {
       const look = JSON.parse(JSON.stringify({ handle, theme, logo })) as BrandKit
       this.project = { ...blankProject(), aspect: this.project.aspect, ...look }
       this.status = kit ? 'Started a new project from your brand kit.' : 'Started a new project.'
+    },
+
+    /** Set accent, background and overlay from the cover image (or the first image in the project). */
+    matchColoursToCover() {
+      const images = useAssetStore().images
+      const slides = this.project.slides
+      const withImage = (s: Slide) => s.images.some((slot) => slot.asset && images[slot.asset])
+      const source = slides.find((s) => s.type === 'cover' && withImage(s)) ?? slides.find(withImage)
+      const asset = source?.images.find((slot) => slot.asset && images[slot.asset])?.asset
+      if (!asset) {
+        this.status = 'Add a cover image first, then match colours to it.'
+        return
+      }
+      const palette = paletteFromImage(images[asset])
+      if (!palette) {
+        this.status = "That image doesn't have a strong colour to match."
+        return
+      }
+      Object.assign(this.project.theme, palette)
+      this.status = 'Matched colours to your image.'
     },
 
     async setLogo(file: File) {

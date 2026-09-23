@@ -143,6 +143,7 @@ export default defineComponent({
       </label>
     </div>
     <p class="hint">Accent colours title effects, list numbers and labels. Background shows on slides without an image.</p>
+    <button class="btn match" @click="projectStore.matchColoursToCover()">Match colours to cover image</button>
 
     <label for="titleEffect">Title effect</label>
     <select id="titleEffect" v-model="theme.titleEffect">
@@ -192,6 +193,7 @@ select, input[type=range] { width: 100%; }
   border-radius: 4px;
 }
 .swatch span { width: 12px; height: 12px; border-radius: 50%; }
+.match { width: 100%; margin-top: 8px; }
 .colours { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; margin-top: 14px; }
 .colours label { display: flex; align-items: center; gap: 8px; margin: 0; font-weight: 600; }
 .preview {
