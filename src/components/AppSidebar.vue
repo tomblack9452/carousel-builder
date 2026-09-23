@@ -26,7 +26,7 @@ export default defineComponent({
 
 <template>
   <aside>
-    <h1>Sunset carousel builder</h1>
+    <h1>Instagram Carousel Builder</h1>
     <p class="intro">
       Drop a screenshot on each slide, drag it to reposition, then download. Every slide exports as a 1080×1350 JPG.
     </p>
