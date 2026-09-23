@@ -88,9 +88,6 @@ export default defineComponent({
       </button>
     </div>
 
-    <label for="handle">Your handle</label>
-    <input id="handle" v-model="projectStore.project.handle" type="text">
-
     <label for="fontPair">Fonts</label>
     <select id="fontPair" v-model="theme.fontPair">
       <option v-for="p in FONT_PAIRS" :key="p.id" :value="p.id">{{ p.label }}</option>

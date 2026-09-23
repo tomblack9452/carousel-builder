@@ -44,6 +44,10 @@ export default defineComponent({
 
 <template>
   <SidebarSection title="Brand" :default-open="false">
+    <label for="handle">Your handle</label>
+    <input id="handle" v-model="projectStore.project.handle" type="text" placeholder="@yourhandle">
+    <p class="hint">Shown on every slide. Leave it empty to hide it.</p>
+
     <p class="field-label">Logo watermark</p>
     <div class="row">
       <button class="btn" @click="pickLogo">{{ logo.asset ? 'Replace logo' : 'Add logo' }}</button>
