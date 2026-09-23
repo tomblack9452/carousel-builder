@@ -70,7 +70,7 @@ export const SLIDE_TYPES: Record<SlideType, SlideTypeInfo> = {
     title: { label: 'Heading', placeholder: 'Heading' },
     body: { label: 'Subline', placeholder: 'Subline' },
     imagesOptional: true,
-    imageHint: 'Optional. Without one, the cover image is used, blurred.',
+    imageHint: 'Without one, the cover image is used, blurred.',
   },
 }
 
