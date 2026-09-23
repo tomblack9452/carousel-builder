@@ -107,6 +107,7 @@ export function placeholder(ctx: Ctx, text: string, frame = fullFrame(ctx)): voi
   ctx.fillRect(x, y, w, h)
   ctx.fillStyle = PROMPT_TEXT
   ctx.font = font(600, 52, SUB_FONT)
+  ctx.letterSpacing = '0px'
   ctx.textAlign = 'center'
   ctx.fillText(text, x + w / 2, y + h / 2)
   ctx.textAlign = 'left'
@@ -159,6 +160,8 @@ export function drawHandle(
   ctx.save()
   const pair = fontPair(doc.project.theme.fontPair)
   ctx.font = font(Math.max(...pair.body.weights), size, stack(pair.body))
+  // Headings may have left letter spacing on the context.
+  ctx.letterSpacing = '0px'
   ctx.textAlign = align
   ctx.fillStyle = rgba(doc.project.theme.text, alpha)
   ctx.shadowColor = 'rgba(0,0,0,.55)'

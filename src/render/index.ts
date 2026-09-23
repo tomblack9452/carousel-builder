@@ -47,6 +47,8 @@ export function renderSlide(ctx: Ctx, slide: Slide, doc: RenderDoc): Rect | null
   ctx.filter = 'none'
   ctx.textAlign = 'left'
   ctx.textBaseline = 'alphabetic'
+  // setFont leaves letter spacing on the context; don't carry it into the next render.
+  ctx.letterSpacing = '0px'
   ctx.clearRect(0, 0, doc.width, doc.height)
   const box = renderers[slide.type].draw(ctx, slide, doc)
   drawStickers(ctx, slide, doc)
