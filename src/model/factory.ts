@@ -91,6 +91,7 @@ export function starterProject(): Project {
     handle: '@yourhandle',
     theme: defaultTheme(),
     logo: defaultLogo(),
+    cues: { numbers: false, dots: false, arrow: false },
     slides: [
       createSlide('cover', { title: 'Swipe through\nfor the full story' }),
       ...Array.from({ length: 5 }, () => createSlide('image')),

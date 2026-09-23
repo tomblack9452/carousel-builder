@@ -85,11 +85,22 @@ export interface Logo {
   opacity: number
 }
 
+/** Hints drawn on every slide that there's more to swipe through. */
+export interface SwipeCues {
+  /** "3/10" pill. */
+  numbers: boolean
+  /** Progress dots along the bottom. */
+  dots: boolean
+  /** Arrow on the right edge of every slide but the last. */
+  arrow: boolean
+}
+
 export interface Project {
   aspect: AspectId
   handle: string
   theme: Theme
   logo: Logo
+  cues: SwipeCues
   slides: Slide[]
 }
 

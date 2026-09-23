@@ -1,4 +1,5 @@
 import type { Rect, RenderDoc, Slide, SlideType } from '../types'
+import { drawCues } from './cues'
 import type { Ctx } from './draw'
 import { compareFrames, drawCompare } from './slides/compare'
 import { drawCover } from './slides/cover'
@@ -42,6 +43,7 @@ export function renderSlide(ctx: Ctx, slide: Slide, doc: RenderDoc): Rect | null
   ctx.clearRect(0, 0, doc.width, doc.height)
   const box = renderers[slide.type].draw(ctx, slide, doc)
   drawLogo(ctx, doc)
+  drawCues(ctx, slide, doc)
   return box
 }
 

@@ -110,6 +110,11 @@ export function normalizeProject(raw: unknown): Project {
     handle: str(raw.handle, defaults.handle),
     theme: normalizeTheme(raw.theme, raw.accent),
     logo: normalizeLogo(raw.logo),
+    cues: {
+      numbers: isObject(raw.cues) && raw.cues.numbers === true,
+      dots: isObject(raw.cues) && raw.cues.dots === true,
+      arrow: isObject(raw.cues) && raw.cues.arrow === true,
+    },
     slides,
   }
 }

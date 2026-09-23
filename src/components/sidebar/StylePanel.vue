@@ -151,6 +151,11 @@ export default defineComponent({
       <option value="none">None</option>
     </select>
 
+    <p class="field-label">Swipe cues</p>
+    <label class="check"><input v-model="projectStore.project.cues.numbers" type="checkbox"> Slide numbers (3/10)</label>
+    <label class="check"><input v-model="projectStore.project.cues.dots" type="checkbox"> Progress dots</label>
+    <label class="check"><input v-model="projectStore.project.cues.arrow" type="checkbox"> Swipe arrow</label>
+
     <label for="overlayStrength">Image overlay <span class="value">{{ percent(theme.overlayStrength) }}</span></label>
     <input
       id="overlayStrength" type="range" min="0" max="1.5" step="0.05"
@@ -162,7 +167,7 @@ export default defineComponent({
 <style scoped>
 select, input[type=range] { width: 100%; }
 .value { float: right; font-weight: 400; color: var(--muted); }
-.check { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.check { display: flex; align-items: center; gap: 8px; font-weight: 600; margin: 8px 0 0; }
 .check input { accent-color: var(--amber); width: 16px; height: 16px; margin: 0; }
 .presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .preset {
