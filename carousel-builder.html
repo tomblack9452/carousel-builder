@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sunset carousel builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@600&family=Barlow:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root{--dusk:#1c1829;--panel:#262136;--line:#3a3350;--text:#f3eee6;--muted:#a59fb8;--amber:#ffb347}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--dusk);color:var(--text);font-family:Barlow,system-ui,sans-serif;font-size:15px;line-height:1.45}
+.app{display:grid;grid-template-columns:300px 1fr;min-height:100vh}
+aside{border-right:1px solid var(--line);padding:24px;position:sticky;top:0;height:100vh;overflow:auto;background:var(--panel)}
+h1{font-family:Anton,Impact,sans-serif;font-weight:400;font-size:34px;line-height:1.05;margin:0 0 8px}
+.intro{color:var(--muted);margin:0 0 10px}
+label{display:block;font-weight:600;margin:16px 0 6px}
+input[type=text],textarea{width:100%;background:var(--dusk);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:9px 10px;font:inherit}
+textarea{min-height:92px;resize:vertical}
+input[type=color]{width:48px;height:34px;border:1px solid var(--line);background:none;border-radius:6px;padding:2px}
+.btn{display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);background:var(--dusk);color:var(--text);border-radius:6px;padding:9px 12px;font:600 14px Barlow,sans-serif;cursor:pointer}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--amber);border-color:var(--amber);color:#2a1a08}
+.btn.primary:hover{background:#ffc26b}
+.stack{display:grid;gap:10px;margin-top:22px}
+:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+main{padding:24px}
+.status{color:var(--amber);margin:0 0 16px;min-height:1.4em}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:22px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px}
+.card.over{border-color:var(--amber)}
+canvas{display:block;width:100%;aspect-ratio:4/5;border-radius:4px;background:#000;touch-action:none;cursor:grab}
+canvas.empty{cursor:pointer}
+canvas.dragging{cursor:grabbing}
+.meta{display:flex;justify-content:space-between;margin:10px 0 4px;font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:17px}
+.meta span+span{color:var(--muted)}
+.warn{color:var(--amber);font-size:13px;min-height:1.2em;margin:0 0 6px}
+.card input[type=text]{margin-bottom:6px}
+.row{display:flex;gap:8px;align-items:center;margin-top:6px}
+.row input[type=range]{flex:1;accent-color:var(--amber)}
+.row .btn{flex:1;padding:7px 8px}
+.hint{color:var(--muted);font-size:13px;margin:4px 0 0}
+@media (max-width:760px){.app{grid-template-columns:1fr}aside{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside>
+  <h1>Sunset carousel builder</h1>
+  <p class="intro">Drop a screenshot on each slide, drag it to reposition, then download. Every slide exports as a 1080×1350 JPG.</p>
+  <label for="handle">Your handle</label>
+  <input type="text" id="handle" value="@yourhandle">
+  <label for="title">Cover title (one line per row)</label>
+  <textarea id="title">The beauty
+of sunset
+in games</textarea>
+  <label for="shadow">Title shadow colour</label>
+  <input type="color" id="shadow" value="#ff7a3d">
+  <label for="endTitle">Last slide heading</label>
+  <input type="text" id="endTitle" value="Which one's yours?">
+  <label for="endSub">Last slide subline</label>
+  <input type="text" id="endSub" value="Drop your favourite game sunset in the comments">
+  <div class="stack">
+    <button class="btn" id="bulkBtn">Load 10 screenshots at once</button>
+    <input type="file" id="bulk" accept="image/*" multiple hidden>
+    <p class="hint">Files fill slides 2 to 11 in filename order, so name them 01.jpg to 10.jpg. The first one also becomes the cover.</p>
+    <button class="btn primary" id="dlAll">Download all 12 slides</button>
+  </div>
+</aside>
+<main>
+  <p class="status" id="status" role="status"></p>
+  <div class="grid" id="grid"></div>
+</main>
+</div>
+<script>
+const W=1080,H=1350;
+const TITLE='Anton, Impact, "Arial Narrow", sans-serif';
+const SUB='"Barlow Condensed", "Arial Narrow", sans-serif';
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const state={handle:$('handle').value,title:$('title').value,shadow:$('shadow').value,endTitle:$('endTitle').value,endSub:$('endSub').value};
+
+const games=[
+  ['',''],
+  ['',''],
+  ['',''],
+  ['',''],
+  ['',''],
+  ['',''],
+  ['',''],
+  ['',''],
+  ['',''],
+  ['','']
+];
+const slides=[{type:'cover'}];
+games.forEach(g=>slides.push({type:'game',name:g[0],meta:g[1]}));
+slides.push({type:'end'});
+slides.forEach(s=>Object.assign(s,{img:null,zoom:1,px:0,py:0}));
+const LAST=slides.length-1;
+
+function status(t){$('status').textContent=t}
+
+function fit(s){
+  const iw=s.img.naturalWidth,ih=s.img.naturalHeight;
+  const sc=Math.max(W/iw,H/ih)*s.zoom;
+  const dw=iw*sc,dh=ih*sc;
+  return{sc,dw,dh,mx:(dw-W)/2,my:(dh-H)/2};
+}
+function drawImg(ctx,s){
+  const {dw,dh,mx,my}=fit(s);
+  ctx.drawImage(s.img,-mx+s.px*mx,-my+s.py*my,dw,dh);
+}
+function placeholder(ctx,text){
+  ctx.fillStyle='#2a2540';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#a59fb8';ctx.font=`600 52px ${SUB}`;ctx.textAlign='center';
+  ctx.fillText(text,W/2,H/2);ctx.textAlign='left';
+}
+function shade(ctx,from,alpha){
+  const g=ctx.createLinearGradient(0,H*from,0,H);
+  g.addColorStop(0,'rgba(18,10,28,0)');g.addColorStop(1,`rgba(18,10,28,${alpha})`);
+  ctx.fillStyle=g;ctx.fillRect(0,H*from,W,H*(1-from));
+}
+function hardText(ctx,t,x,y,off){
+  ctx.fillStyle=state.shadow;ctx.fillText(t,x+off,y+off);
+  ctx.fillStyle='#fff';ctx.fillText(t,x,y);
+}
+function font(w,sz,fam){return `${w?w+' ':''}${sz}px ${fam}`}
+function fitSize(ctx,lines,w,fam,maxW,start,min){
+  let sz=start;
+  for(;sz>min;sz-=2){ctx.font=font(w,sz,fam);if(lines.every(l=>ctx.measureText(l).width<=maxW))break}
+  return sz;
+}
+function wrapFit(ctx,text,w,fam,maxW,start,min,maxLines){
+  let best=null;
+  for(let sz=start;sz>=min;sz-=4){
+    ctx.font=font(w,sz,fam);
+    const lines=[];let cur='';
+    for(const word of text.split(/\s+/).filter(Boolean)){
+      const t=cur?cur+' '+word:word;
+      if(!cur||ctx.measureText(t).width<=maxW)cur=t;else{lines.push(cur);cur=word}
+    }
+    if(cur)lines.push(cur);
+    best={sz,lines};
+    if(lines.length<=maxLines&&lines.every(l=>ctx.measureText(l).width<=maxW))return best;
+  }
+  return best;
+}
+function drawHandle(ctx,align,x,y,size,alpha){
+  const h=state.handle.trim();if(!h)return;
+  ctx.save();ctx.font=font(600,size,SUB);ctx.textAlign=align;
+  ctx.fillStyle=`rgba(255,255,255,${alpha})`;ctx.shadowColor='rgba(0,0,0,.55)';ctx.shadowBlur=8;
+  ctx.fillText(h,x,y);ctx.restore();
+}
+
+function cover(ctx,s){
+  if(s.img)drawImg(ctx,s);else placeholder(ctx,'Drop the cover image here');
+  shade(ctx,.35,.7);
+  const lines=state.title.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>l.toUpperCase());
+  if(lines.length){
+    let sz=fitSize(ctx,lines,'',TITLE,W-170,210,60);
+    while(sz>60&&lines.length*sz*1.02>H*.62)sz-=2;
+    ctx.font=font('',sz,TITLE);
+    const lh=sz*1.02,off=Math.round(sz*.06);
+    let y=H-110-(lines.length-1)*lh;
+    lines.forEach(l=>{hardText(ctx,l,80,y,off);y+=lh});
+  }
+  drawHandle(ctx,'center',W/2,90,36,.9);
+}
+function game(ctx,s){
+  if(s.img)drawImg(ctx,s);else placeholder(ctx,'Drop a screenshot here');
+  shade(ctx,.55,.75);
+  const name=(s.name||'').trim(),meta=(s.meta||'').trim();
+  if(name){
+    const sz=fitSize(ctx,[name],'',TITLE,W-170,96,44);
+    ctx.font=font('',sz,TITLE);
+    hardText(ctx,name,80,meta?H-150:H-100,Math.max(3,Math.round(sz*.06)));
+  }
+  if(meta){ctx.font=font(600,38,SUB);ctx.fillStyle='rgba(255,255,255,.88)';ctx.fillText(meta,82,H-92)}
+  drawHandle(ctx,'right',W-60,80,30,.75);
+}
+function endSlide(ctx){
+  const src=slides[0].img?slides[0]:slides.find(x=>x.type==='game'&&x.img);
+  if(src){
+    ctx.save();ctx.filter='blur(28px) brightness(.5)';
+    ctx.translate(W/2,H/2);ctx.scale(1.12,1.12);ctx.translate(-W/2,-H/2);
+    drawImg(ctx,src);ctx.restore();
+  }else{ctx.fillStyle='#2a2540';ctx.fillRect(0,0,W,H)}
+  ctx.textAlign='center';
+  const t=state.endTitle.trim().toUpperCase();
+  let y=H*.44;
+  if(t){
+    const {sz,lines}=wrapFit(ctx,t,'',TITLE,W-200,160,70,3);
+    ctx.font=font('',sz,TITLE);
+    const lh=sz*1.02;y=H*.44-(lines.length-1)*lh/2;
+    lines.forEach(l=>{hardText(ctx,l,W/2,y,Math.round(sz*.06));y+=lh});
+  }
+  const sub=state.endSub.trim();
+  if(sub){
+    const r=wrapFit(ctx,sub,600,SUB,W-240,48,30,2);
+    ctx.font=font(600,r.sz,SUB);ctx.fillStyle='rgba(255,255,255,.9)';
+    let sy=y+20;r.lines.forEach(l=>{ctx.fillText(l,W/2,sy);sy+=r.sz*1.2});
+  }
+  drawHandle(ctx,'center',W/2,H-90,36,.9);
+}
+
+function render(i){
+  const s=slides[i],ctx=s.canvas.getContext('2d');
+  ctx.setTransform(1,0,0,1,0,0);ctx.filter='none';ctx.textAlign='left';ctx.textBaseline='alphabetic';
+  ctx.clearRect(0,0,W,H);
+  if(s.type==='cover')cover(ctx,s);else if(s.type==='game')game(ctx,s);else endSlide(ctx);
+  if(s.img){
+    const {sc}=fit(s);
+    s.warnEl.textContent=sc>1.2?`Low resolution (${s.img.naturalWidth}×${s.img.naturalHeight}px). It will look soft when posted.`:'';
+  }else s.warnEl.textContent='';
+}
+const pending=new Set();let raf=0;
+function draw(i){
+  pending.add(i);if(i===0)pending.add(LAST);
+  if(!raf)raf=requestAnimationFrame(()=>{raf=0;const p=[...pending];pending.clear();p.forEach(render)});
+}
+function drawAll(){slides.forEach((_,i)=>draw(i))}
+
+function loadInto(i,file){
+  const img=new Image();
+  img.onload=()=>{
+    const s=slides[i];if(s.url)URL.revokeObjectURL(s.url);
+    Object.assign(s,{url:img.src,img,zoom:1,px:0,py:0});
+    if(s.zoomEl)s.zoomEl.value=1;
+    s.canvas.classList.remove('empty');
+    draw(i);draw(LAST);
+  };
+  img.onerror=()=>status(`${file.name} couldn't be read as an image. Save it as JPG or PNG and try again.`);
+  img.src=URL.createObjectURL(file);
+}
+
+function slug(t){return(t||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)}
+function fname(i){
+  const s=slides[i],n=String(i+1).padStart(2,'0');
+  return `${n}-${s.type==='cover'?'cover':s.type==='end'?'question':slug(s.name)||'slide'}.jpg`;
+}
+function blobOf(i){render(i);return new Promise(r=>slides[i].canvas.toBlob(r,'image/jpeg',.95))}
+function save(blob,name){
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+}
+
+const grid=$('grid');
+slides.forEach((s,i)=>{
+  const card=document.createElement('div');card.className='card';
+  const c=document.createElement('canvas');c.width=W;c.height=H;c.tabIndex=0;
+  c.setAttribute('aria-label',`Slide ${i+1} preview`);
+  s.canvas=c;card.appendChild(c);
+  const head=document.createElement('div');head.className='meta';
+  head.innerHTML=`<span>Slide ${i+1} of ${slides.length}</span><span>${s.type==='cover'?'Cover':s.type==='end'?'Question':''}</span>`;
+  card.appendChild(head);
+  s.warnEl=document.createElement('p');s.warnEl.className='warn';card.appendChild(s.warnEl);
+
+  if(s.type==='game'){
+    const n=document.createElement('input');n.type='text';n.placeholder='Game name';n.value=s.name;
+    n.setAttribute('aria-label',`Slide ${i+1} game name`);n.oninput=()=>{s.name=n.value;draw(i)};
+    const m=document.createElement('input');m.type='text';m.placeholder='Console, year';m.value=s.meta;
+    m.setAttribute('aria-label',`Slide ${i+1} console and year`);m.oninput=()=>{s.meta=m.value;draw(i)};
+    card.append(n,m);
+  }
+
+  const dl=document.createElement('button');dl.className='btn';dl.textContent='Download';
+  dl.onclick=async()=>save(await blobOf(i),fname(i));
+
+  if(s.type!=='end'){
+    c.classList.add('empty');
+    const file=document.createElement('input');file.type='file';file.accept='image/*';file.hidden=true;
+    file.onchange=()=>{if(file.files[0])loadInto(i,file.files[0]);file.value=''};
+    s.fileInput=file;card.appendChild(file);
+
+    const row=document.createElement('div');row.className='row';
+    const z=document.createElement('input');z.type='range';z.min=1;z.max=3;z.step=.01;z.value=1;
+    z.setAttribute('aria-label',`Slide ${i+1} zoom`);z.oninput=()=>{s.zoom=+z.value;draw(i)};
+    s.zoomEl=z;row.append(z);card.appendChild(row);
+
+    const row2=document.createElement('div');row2.className='row';
+    const rep=document.createElement('button');rep.className='btn';rep.textContent='Replace image';
+    rep.onclick=()=>file.click();
+    row2.append(rep,dl);card.appendChild(row2);
+
+    card.addEventListener('dragover',e=>{e.preventDefault();card.classList.add('over')});
+    card.addEventListener('dragleave',()=>card.classList.remove('over'));
+    card.addEventListener('drop',e=>{
+      e.preventDefault();card.classList.remove('over');
+      const f=[...e.dataTransfer.files].find(f=>f.type.startsWith('image/'));
+      if(f)loadInto(i,f);else status('That drop had no image file in it. Drag the saved image file from your folder.');
+    });
+
+    let drag=null;
+    c.addEventListener('pointerdown',e=>{
+      if(!s.img){file.click();return}
+      drag={x:e.clientX,y:e.clientY};c.setPointerCapture(e.pointerId);c.classList.add('dragging');
+    });
+    c.addEventListener('pointermove',e=>{
+      if(!drag)return;
+      const k=W/c.clientWidth,{mx,my}=fit(s);
+      const dx=(e.clientX-drag.x)*k,dy=(e.clientY-drag.y)*k;
+      drag={x:e.clientX,y:e.clientY};
+      if(mx>0)s.px=clamp(s.px+dx/mx,-1,1);
+      if(my>0)s.py=clamp(s.py+dy/my,-1,1);
+      draw(i);
+    });
+    const stop=()=>{drag=null;c.classList.remove('dragging')};
+    c.addEventListener('pointerup',stop);c.addEventListener('pointercancel',stop);
+    c.addEventListener('keydown',e=>{
+      if(!s.img){if(e.key==='Enter'||e.key===' '){e.preventDefault();file.click()}return}
+      const step={ArrowLeft:[-.05,0],ArrowRight:[.05,0],ArrowUp:[0,-.05],ArrowDown:[0,.05]}[e.key];
+      if(step){e.preventDefault();s.px=clamp(s.px+step[0],-1,1);s.py=clamp(s.py+step[1],-1,1);draw(i)}
+    });
+  }else{
+    const hint=document.createElement('p');hint.className='hint';hint.textContent='Background uses the cover image, blurred.';
+    const row=document.createElement('div');row.className='row';row.append(dl);
+    card.append(hint,row);
+  }
+  grid.appendChild(card);
+});
+
+['handle','title','shadow','endTitle','endSub'].forEach(id=>{
+  $(id).addEventListener('input',()=>{state[id]=$(id).value;drawAll()});
+});
+
+$('bulkBtn').onclick=()=>$('bulk').click();
+$('bulk').onchange=e=>{
+  const files=[...e.target.files].filter(f=>f.type.startsWith('image/'))
+    .sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
+  files.slice(0,10).forEach((f,k)=>loadInto(k+1,f));
+  if(!slides[0].img&&files[0])loadInto(0,files[0]);
+  status(`Loaded ${Math.min(files.length,10)} screenshots.${files.length>10?' Only the first 10 were used.':''}`);
+  e.target.value='';
+};
+
+$('dlAll').onclick=async()=>{
+  const missing=slides.filter(s=>s.type!=='end'&&!s.img).length;
+  if(missing)status(`${missing} slide${missing>1?'s have':' has'} no image yet. Downloading anyway.`);
+  if(window.JSZip){
+    const zip=new JSZip();
+    for(let i=0;i<slides.length;i++)zip.file(fname(i),await blobOf(i));
+    save(await zip.generateAsync({type:'blob'}),'sunset-carousel.zip');
+    if(!missing)status('Downloaded sunset-carousel.zip with all 12 slides.');
+  }else{
+    for(let i=0;i<slides.length;i++){save(await blobOf(i),fname(i));await new Promise(r=>setTimeout(r,400))}
+    if(!missing)status('Downloaded all 12 slides.');
+  }
+};
+
+drawAll();
+Promise.all([document.fonts.load('40px Anton'),document.fonts.load('600 40px "Barlow Condensed"')])
+  .catch(()=>{}).finally(drawAll);
+</script>
+</body>
+</html>
