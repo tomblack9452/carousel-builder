@@ -1,15 +1,8 @@
-export type SlideType = 'cover' | 'game' | 'end'
+export type SlideType = 'cover' | 'image' | 'cta'
 
-export interface Slide {
-  id: number
-  type: SlideType
-  /** Game name (game slides only). */
-  name: string
-  /** "Console, year" line (game slides only). */
-  meta: string
-  img: HTMLImageElement | null
-  /** Object URL backing `img`, revoked when replaced. */
-  url: string | null
+export interface ImageSlot {
+  /** Asset id in the asset store, or null when empty. */
+  asset: string | null
   /** 1 = cover-fit, up to 3. */
   zoom: number
   /** Pan position, -1 to 1 on each axis. 0 = centred. */
@@ -17,16 +10,34 @@ export interface Slide {
   py: number
 }
 
-export interface Settings {
-  handle: string
+export interface Slide {
+  id: string
+  type: SlideType
+  /** Main text. What it means depends on the slide type (see model/slideTypes). */
   title: string
-  shadow: string
-  endTitle: string
-  endSub: string
+  /** Secondary text. */
+  body: string
+  images: ImageSlot[]
 }
 
-/** Everything a renderer may read besides the slide it draws. */
-export interface RenderDoc {
-  settings: Settings
+export interface Project {
+  handle: string
+  /** Title shadow colour. */
+  accent: string
   slides: Slide[]
+}
+
+export interface Rect {
+  x: number
+  y: number
+  w: number
+  h: number
+}
+
+/** Everything a renderer may read. */
+export interface RenderDoc {
+  project: Project
+  images: Record<string, HTMLImageElement>
+  width: number
+  height: number
 }

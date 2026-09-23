@@ -1,17 +1,24 @@
-import { W, H } from '../constants'
-import type { RenderDoc, Slide, SlideType } from '../types'
+import type { Rect, RenderDoc, Slide, SlideType } from '../types'
 import type { Ctx } from './draw'
 import { drawCover } from './slides/cover'
-import { drawEnd } from './slides/end'
-import { drawGame } from './slides/game'
+import { drawCta } from './slides/cta'
+import { drawImage } from './slides/image'
 
-export type SlideRenderer = (ctx: Ctx, slide: Slide, doc: RenderDoc) => void
+export interface SlideRenderer {
+  draw: (ctx: Ctx, slide: Slide, doc: RenderDoc) => void
+  /** Where each image slot sits on the slide. Defaults to one full-bleed frame. */
+  frames?: (w: number, h: number) => Rect[]
+}
 
 /** One renderer per slide type. Add a new slide type by adding an entry here. */
 const renderers: Record<SlideType, SlideRenderer> = {
-  cover: drawCover,
-  game: drawGame,
-  end: drawEnd,
+  cover: { draw: drawCover },
+  image: { draw: drawImage },
+  cta: { draw: drawCta },
+}
+
+export function slotFrames(slide: Slide, w: number, h: number): Rect[] {
+  return renderers[slide.type].frames?.(w, h) ?? [{ x: 0, y: 0, w, h }]
 }
 
 export function renderSlide(ctx: Ctx, slide: Slide, doc: RenderDoc): void {
@@ -19,6 +26,6 @@ export function renderSlide(ctx: Ctx, slide: Slide, doc: RenderDoc): void {
   ctx.filter = 'none'
   ctx.textAlign = 'left'
   ctx.textBaseline = 'alphabetic'
-  ctx.clearRect(0, 0, W, H)
-  renderers[slide.type](ctx, slide, doc)
+  ctx.clearRect(0, 0, doc.width, doc.height)
+  renderers[slide.type].draw(ctx, slide, doc)
 }

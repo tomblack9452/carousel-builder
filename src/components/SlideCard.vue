@@ -2,12 +2,13 @@
 import { defineComponent, type PropType } from 'vue'
 import { mapStores } from 'pinia'
 import { LOW_RES_SCALE } from '../constants'
+import { SLIDE_TYPES, type SlideTypeInfo } from '../model/slideTypes'
+import { slotFrames } from '../render'
 import { fitImage } from '../render/geometry'
+import { useAssetStore } from '../stores/assets'
 import { useProjectStore } from '../stores/project'
 import type { Slide } from '../types'
 import SlideCanvas from './SlideCanvas.vue'
-
-const TYPE_LABELS: Record<Slide['type'], string> = { cover: 'Cover', game: '', end: 'Question' }
 
 export default defineComponent({
   name: 'SlideCard',
@@ -18,30 +19,41 @@ export default defineComponent({
     total: { type: Number, required: true },
   },
   data() {
-    return { dragOver: false }
+    return {
+      dragOver: false,
+      /** Which image slot the hidden file input is choosing for. */
+      pickingSlot: 0,
+    }
   },
   computed: {
-    ...mapStores(useProjectStore),
-    takesImage(): boolean {
-      return this.slide.type !== 'end'
+    ...mapStores(useProjectStore, useAssetStore),
+    info(): SlideTypeInfo {
+      return SLIDE_TYPES[this.slide.type]
     },
-    typeLabel(): string {
-      return TYPE_LABELS[this.slide.type]
+    takesImage(): boolean {
+      return this.slide.images.length > 0
     },
     lowResWarning(): string {
-      const img = this.slide.img
-      if (!img || fitImage(img, this.slide.zoom).scale <= LOW_RES_SCALE) return ''
-      return `Low resolution (${img.naturalWidth}×${img.naturalHeight}px). It will look soft when posted.`
+      const { width, height } = this.projectStore.doc
+      const frames = slotFrames(this.slide, width, height)
+      for (const [i, slot] of this.slide.images.entries()) {
+        const img = slot.asset ? this.assetsStore.images[slot.asset] : undefined
+        if (img && fitImage(img, slot.zoom, frames[i].w, frames[i].h).scale > LOW_RES_SCALE) {
+          return `Low resolution (${img.naturalWidth}×${img.naturalHeight}px). It will look soft when posted.`
+        }
+      }
+      return ''
     },
   },
   methods: {
-    pickFile() {
-      (this.$refs.file as HTMLInputElement).click()
+    pickFile(slot: number) {
+      this.pickingSlot = slot
+      ;(this.$refs.file as HTMLInputElement).click()
     },
     onFileChange(event: Event) {
       const input = event.target as HTMLInputElement
       const file = input.files?.[0]
-      if (file) this.projectStore.loadImage(this.index, file)
+      if (file) this.projectStore.setImage(this.slide.id, this.pickingSlot, file)
       input.value = ''
     },
     onDragOver(event: DragEvent) {
@@ -54,14 +66,19 @@ export default defineComponent({
       event.preventDefault()
       this.dragOver = false
       const file = [...(event.dataTransfer?.files ?? [])].find((f) => f.type.startsWith('image/'))
-      if (file) this.projectStore.loadImage(this.index, file)
-      else this.projectStore.status = 'That drop had no image file in it. Drag the saved image file from your folder.'
+      if (!file) {
+        this.projectStore.status = 'That drop had no image file in it. Drag the saved image file from your folder.'
+        return
+      }
+      // Fill the first empty slot, else replace the first.
+      const empty = this.slide.images.findIndex((s) => !s.asset)
+      this.projectStore.setImage(this.slide.id, Math.max(0, empty), file)
     },
-    onTextInput(field: 'name' | 'meta', event: Event) {
-      this.projectStore.updateSlide(this.index, { [field]: (event.target as HTMLInputElement).value })
+    onText(field: 'title' | 'body', event: Event) {
+      this.projectStore.updateSlide(this.slide.id, { [field]: (event.target as HTMLInputElement).value })
     },
-    onZoom(event: Event) {
-      this.projectStore.updateSlide(this.index, { zoom: Number((event.target as HTMLInputElement).value) })
+    onZoom(slot: number, event: Event) {
+      this.projectStore.updateSlot(this.slide.id, slot, { zoom: Number((event.target as HTMLInputElement).value) })
     },
   },
 })
@@ -75,55 +92,58 @@ export default defineComponent({
     @dragleave="dragOver = false"
     @drop="onDrop"
   >
-    <SlideCanvas :slide="slide" :index="index" :interactive="takesImage" @pick="pickFile" />
+    <SlideCanvas :slide="slide" :index="index" @pick="pickFile" />
 
     <div class="meta">
       <span>Slide {{ index + 1 }} of {{ total }}</span>
-      <span>{{ typeLabel }}</span>
+      <span>{{ info.label }}</span>
     </div>
     <p class="warn">{{ lowResWarning }}</p>
 
-    <template v-if="slide.type === 'game'">
-      <input
-        type="text"
-        placeholder="Game name"
-        :value="slide.name"
-        :aria-label="`Slide ${index + 1} game name`"
-        @input="onTextInput('name', $event)"
-      >
-      <input
-        type="text"
-        placeholder="Console, year"
-        :value="slide.meta"
-        :aria-label="`Slide ${index + 1} console and year`"
-        @input="onTextInput('meta', $event)"
-      >
+    <template v-for="field in (['title', 'body'] as const)" :key="field">
+      <template v-if="info[field]">
+        <textarea
+          v-if="info[field]?.multiline"
+          :value="slide[field]"
+          :placeholder="info[field]?.placeholder"
+          :aria-label="`Slide ${index + 1} ${info[field]?.label}`"
+          rows="3"
+          @input="onText(field, $event)"
+        />
+        <input
+          v-else
+          type="text"
+          :value="slide[field]"
+          :placeholder="info[field]?.placeholder"
+          :aria-label="`Slide ${index + 1} ${info[field]?.label}`"
+          @input="onText(field, $event)"
+        >
+      </template>
     </template>
 
     <template v-if="takesImage">
       <input ref="file" type="file" accept="image/*" hidden @change="onFileChange">
-      <div class="row">
+      <div v-for="(slot, i) in slide.images" :key="i" class="row">
         <input
           type="range"
           min="1"
           max="3"
           step="0.01"
-          :value="slide.zoom"
-          :aria-label="`Slide ${index + 1} zoom`"
-          @input="onZoom"
+          :value="slot.zoom"
+          :disabled="!slot.asset"
+          :aria-label="`Slide ${index + 1} image ${i + 1} zoom`"
+          @input="onZoom(i, $event)"
         >
+        <button class="btn" @click="pickFile(i)">
+          {{ slot.asset ? 'Replace' : 'Add' }} image{{ slide.images.length > 1 ? ` ${i + 1}` : '' }}
+        </button>
       </div>
-      <div class="row">
-        <button class="btn" @click="pickFile">Replace image</button>
-        <button class="btn" @click="projectStore.downloadSlide(index)">Download</button>
-      </div>
+      <p v-if="info.imageHint" class="hint">{{ info.imageHint }}</p>
     </template>
-    <template v-else>
-      <p class="hint">Background uses the cover image, blurred.</p>
-      <div class="row">
-        <button class="btn" @click="projectStore.downloadSlide(index)">Download</button>
-      </div>
-    </template>
+
+    <div class="row">
+      <button class="btn" @click="projectStore.downloadSlide(slide.id)">Download</button>
+    </div>
   </div>
 </template>
 
@@ -135,7 +155,8 @@ export default defineComponent({
   padding: 12px;
 }
 .card.over { border-color: var(--amber); }
-.card input[type=text] { margin-bottom: 6px; }
+.card input[type=text], .card textarea { margin-bottom: 6px; }
+.card textarea { min-height: 0; }
 
 .meta {
   display: flex;

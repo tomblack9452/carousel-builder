@@ -1,8 +1,8 @@
 <script lang="ts">
 import { defineComponent, watchEffect, type PropType, type WatchStopHandle } from 'vue'
 import { mapStores } from 'pinia'
-import { W, H } from '../constants'
-import { renderSlide } from '../render'
+import { renderSlide, slotFrames } from '../render'
+import { contains } from '../render/geometry'
 import { useProjectStore } from '../stores/project'
 import type { Slide } from '../types'
 
@@ -13,74 +13,107 @@ const NUDGE_KEYS: Record<string, [number, number]> = {
   ArrowDown: [0, 0.05],
 }
 
+interface Drag {
+  x: number
+  y: number
+  slot: number
+}
+
 export default defineComponent({
   name: 'SlideCanvas',
   props: {
     slide: { type: Object as PropType<Slide>, required: true },
     index: { type: Number, required: true },
-    /** False for slides with no image of their own (drag/zoom/click-to-pick disabled). */
-    interactive: { type: Boolean, default: true },
   },
-  emits: ['pick'],
+  emits: {
+    /** Ask the parent to open a file picker for an image slot. */
+    pick: (slot: number) => slot >= 0,
+  },
   data() {
     return {
-      W,
-      H,
-      drag: null as { x: number; y: number } | null,
+      drag: null as Drag | null,
       stopRender: null as WatchStopHandle | null,
     }
   },
   computed: {
     ...mapStores(useProjectStore),
+    interactive(): boolean {
+      return this.slide.images.length > 0
+    },
+    empty(): boolean {
+      return this.interactive && this.slide.images.every((s) => !s.asset)
+    },
+    aspectRatio(): string {
+      return `${this.projectStore.doc.width} / ${this.projectStore.doc.height}`
+    },
   },
   mounted() {
-    const ctx = (this.$refs.canvas as HTMLCanvasElement).getContext('2d')
+    const canvas = this.$refs.canvas as HTMLCanvasElement
+    const ctx = canvas.getContext('2d')
     if (!ctx) return
     // Re-renders whenever anything the renderer reads changes: this slide,
-    // the shared settings, or (for the end slide) whichever image it blurs.
+    // project settings, or another slide's image it borrows.
     this.stopRender = watchEffect(() => {
       void this.projectStore.fontsReady
-      renderSlide(ctx, this.slide, this.projectStore.doc)
+      const doc = this.projectStore.doc
+      if (canvas.width !== doc.width) canvas.width = doc.width
+      if (canvas.height !== doc.height) canvas.height = doc.height
+      renderSlide(ctx, this.slide, doc)
     })
   },
   unmounted() {
     this.stopRender?.()
   },
   methods: {
+    /** Pointer position in slide pixels. */
+    toSlide(event: PointerEvent): { x: number; y: number; k: number } {
+      const canvas = event.currentTarget as HTMLCanvasElement
+      const rect = canvas.getBoundingClientRect()
+      const k = canvas.width / rect.width
+      return { x: (event.clientX - rect.left) * k, y: (event.clientY - rect.top) * k, k }
+    },
+    slotAt(x: number, y: number): number {
+      const frames = slotFrames(this.slide, this.projectStore.doc.width, this.projectStore.doc.height)
+      const hit = frames.findIndex((f, i) => i < this.slide.images.length && contains(f, x, y))
+      return Math.max(0, hit)
+    },
     onPointerDown(event: PointerEvent) {
       if (!this.interactive) return
-      if (!this.slide.img) {
-        this.$emit('pick')
+      const { x, y } = this.toSlide(event)
+      const slot = this.slotAt(x, y)
+      if (!this.slide.images[slot].asset) {
+        this.$emit('pick', slot)
         return
       }
-      this.drag = { x: event.clientX, y: event.clientY }
+      this.drag = { x: event.clientX, y: event.clientY, slot }
       ;(event.currentTarget as HTMLCanvasElement).setPointerCapture(event.pointerId)
     },
     onPointerMove(event: PointerEvent) {
       if (!this.drag) return
-      // Convert on-screen pixels to slide pixels.
-      const k = W / (event.currentTarget as HTMLCanvasElement).clientWidth
+      const { k } = this.toSlide(event)
       const dx = (event.clientX - this.drag.x) * k
       const dy = (event.clientY - this.drag.y) * k
-      this.drag = { x: event.clientX, y: event.clientY }
-      this.projectStore.panBy(this.index, dx, dy)
+      this.drag = { ...this.drag, x: event.clientX, y: event.clientY }
+      this.projectStore.panBy(this.slide.id, this.drag.slot, dx, dy)
     },
     stopDrag() {
       this.drag = null
     },
     onKeydown(event: KeyboardEvent) {
       if (!this.interactive) return
-      if (!this.slide.img) {
+      // Keyboard acts on the first slot that has an image, else offers a picker.
+      const slot = this.slide.images.findIndex((s) => s.asset)
+      if (slot < 0) {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault()
-          this.$emit('pick')
+          this.$emit('pick', 0)
         }
         return
       }
       const step = NUDGE_KEYS[event.key]
       if (step) {
         event.preventDefault()
-        this.projectStore.nudge(this.index, step[0], step[1])
+        this.projectStore.nudge(this.slide.id, slot, step[0], step[1])
       }
     },
   },
@@ -90,11 +123,10 @@ export default defineComponent({
 <template>
   <canvas
     ref="canvas"
-    :width="W"
-    :height="H"
     tabindex="0"
+    :style="{ aspectRatio }"
     :aria-label="`Slide ${index + 1} preview`"
-    :class="{ interactive, empty: interactive && !slide.img, dragging: drag }"
+    :class="{ interactive, empty, dragging: drag }"
     @pointerdown="onPointerDown"
     @pointermove="onPointerMove"
     @pointerup="stopDrag"
@@ -107,7 +139,6 @@ export default defineComponent({
 canvas {
   display: block;
   width: 100%;
-  aspect-ratio: 4 / 5;
   border-radius: 4px;
   background: #000;
   touch-action: none;

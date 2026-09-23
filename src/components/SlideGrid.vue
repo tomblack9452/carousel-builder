@@ -16,11 +16,11 @@ export default defineComponent({
 <template>
   <div class="grid">
     <SlideCard
-      v-for="(slide, index) in projectStore.slides"
+      v-for="(slide, index) in projectStore.project.slides"
       :key="slide.id"
       :slide="slide"
       :index="index"
-      :total="projectStore.slides.length"
+      :total="projectStore.project.slides.length"
     />
   </div>
 </template>

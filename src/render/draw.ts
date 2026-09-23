@@ -1,5 +1,5 @@
-import { W, H, SUB_FONT } from '../constants'
-import type { Slide } from '../types'
+import { SUB_FONT } from '../constants'
+import type { ImageSlot, Rect, RenderDoc } from '../types'
 import { fitImage } from './geometry'
 
 export type Ctx = CanvasRenderingContext2D
@@ -8,25 +8,35 @@ export function font(weight: number | '', size: number, family: string): string 
   return `${weight ? weight + ' ' : ''}${size}px ${family}`
 }
 
-/** Draw the slide's image cover-fitted, zoomed and panned. */
-export function drawSlideImage(ctx: Ctx, slide: Slide): void {
-  if (!slide.img) return
-  const { width, height, marginX, marginY } = fitImage(slide.img, slide.zoom)
-  ctx.drawImage(slide.img, -marginX + slide.px * marginX, -marginY + slide.py * marginY, width, height)
+export function slotImage(doc: RenderDoc, slot: ImageSlot | undefined): HTMLImageElement | null {
+  return slot?.asset ? doc.images[slot.asset] ?? null : null
 }
 
-export function placeholder(ctx: Ctx, text: string): void {
+/** Draw an image cover-fitted, zoomed and panned inside `frame`, clipped to it. */
+export function drawSlot(ctx: Ctx, img: HTMLImageElement, slot: ImageSlot, frame: Rect): void {
+  const { width, height, marginX, marginY } = fitImage(img, slot.zoom, frame.w, frame.h)
+  ctx.save()
+  ctx.beginPath()
+  ctx.rect(frame.x, frame.y, frame.w, frame.h)
+  ctx.clip()
+  ctx.drawImage(img, frame.x - marginX + slot.px * marginX, frame.y - marginY + slot.py * marginY, width, height)
+  ctx.restore()
+}
+
+export function placeholder(ctx: Ctx, text: string, frame?: Rect): void {
+  const { x, y, w, h } = frame ?? { x: 0, y: 0, w: ctx.canvas.width, h: ctx.canvas.height }
   ctx.fillStyle = '#2a2540'
-  ctx.fillRect(0, 0, W, H)
+  ctx.fillRect(x, y, w, h)
   ctx.fillStyle = '#a59fb8'
   ctx.font = font(600, 52, SUB_FONT)
   ctx.textAlign = 'center'
-  ctx.fillText(text, W / 2, H / 2)
+  ctx.fillText(text, x + w / 2, y + h / 2)
   ctx.textAlign = 'left'
 }
 
 /** Dark gradient from `from` (fraction of height) to the bottom edge, for text legibility. */
 export function shade(ctx: Ctx, from: number, alpha: number): void {
+  const { width: W, height: H } = ctx.canvas
   const g = ctx.createLinearGradient(0, H * from, 0, H)
   g.addColorStop(0, 'rgba(18,10,28,0)')
   g.addColorStop(1, `rgba(18,10,28,${alpha})`)

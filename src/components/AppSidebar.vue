@@ -7,9 +7,6 @@ export default defineComponent({
   name: 'AppSidebar',
   computed: {
     ...mapStores(useProjectStore),
-    lastFileName(): string {
-      return String(this.projectStore.gameCount).padStart(2, '0') + '.jpg'
-    },
   },
   methods: {
     openBulkPicker() {
@@ -27,43 +24,34 @@ export default defineComponent({
 <template>
   <aside>
     <h1 class="title">
-      <span class="title-icon" aria-hidden="true">
+      
+      <span><span class="title-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" role="img" aria-label="Instagram logo">
           <rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="1.8"/>
           <circle cx="12" cy="12" r="4.1" fill="none" stroke="currentColor" stroke-width="1.8"/>
           <circle cx="17.2" cy="6.8" r="1.3" fill="currentColor"/>
         </svg>
-      </span>
-      <span>Instagram Carousel Builder</span>
+      </span>Instagram Carousel Builder</span>
     </h1>
     <p class="intro">
-      Drop a screenshot on each slide, drag it to reposition, then download. Every slide exports as a 1080×1350 JPG.
+      Drop an image on each slide, drag it to reposition, then download. Every slide exports as a 1080×1350 JPG.
     </p>
 
     <label for="handle">Your handle</label>
-    <input id="handle" v-model="projectStore.settings.handle" type="text">
+    <input id="handle" v-model="projectStore.project.handle" type="text">
 
-    <label for="title">Cover title (one line per row)</label>
-    <textarea id="title" v-model="projectStore.settings.title" />
-
-    <label for="shadow">Title shadow colour</label>
-    <input id="shadow" v-model="projectStore.settings.shadow" type="color">
-
-    <label for="endTitle">Last slide heading</label>
-    <input id="endTitle" v-model="projectStore.settings.endTitle" type="text">
-
-    <label for="endSub">Last slide subline</label>
-    <input id="endSub" v-model="projectStore.settings.endSub" type="text">
+    <label for="accent">Title shadow colour</label>
+    <input id="accent" v-model="projectStore.project.accent" type="color">
 
     <div class="stack">
-      <button class="btn" @click="openBulkPicker">Load {{ projectStore.gameCount }} screenshots at once</button>
+      <button class="btn" @click="openBulkPicker">Load images at once</button>
       <input ref="bulk" type="file" accept="image/*" multiple hidden @change="onBulkChange">
       <p class="hint">
-        Files fill slides 2 to {{ projectStore.gameCount + 1 }} in filename order, so name them 01.jpg to
-        {{ lastFileName }}. The first one also becomes the cover.
+        Files fill the {{ projectStore.imageSlideCount }} image slides in filename order, so name them 01.jpg, 02.jpg
+        and so on. The first one also becomes the cover if it's empty.
       </p>
       <button class="btn primary" @click="projectStore.downloadAll()">
-        Download all {{ projectStore.slides.length }} slides
+        Download all {{ projectStore.project.slides.length }} slides
       </button>
     </div>
   </aside>

@@ -1,13 +1,15 @@
-import { W, H, TITLE_FONT } from '../../constants'
+import { TITLE_FONT } from '../../constants'
 import type { RenderDoc, Slide } from '../../types'
-import { type Ctx, drawHandle, drawSlideImage, fitSize, font, hardText, placeholder, shade } from '../draw'
+import { type Ctx, drawHandle, drawSlot, fitSize, font, hardText, placeholder, shade, slotImage } from '../draw'
 
-export function drawCover(ctx: Ctx, slide: Slide, { settings }: RenderDoc): void {
-  if (slide.img) drawSlideImage(ctx, slide)
+export function drawCover(ctx: Ctx, slide: Slide, doc: RenderDoc): void {
+  const { width: W, height: H, project } = doc
+  const img = slotImage(doc, slide.images[0])
+  if (img) drawSlot(ctx, img, slide.images[0], { x: 0, y: 0, w: W, h: H })
   else placeholder(ctx, 'Drop the cover image here')
   shade(ctx, 0.35, 0.7)
 
-  const lines = settings.title
+  const lines = slide.title
     .split('\n')
     .map((l) => l.trim())
     .filter(Boolean)
@@ -21,10 +23,10 @@ export function drawCover(ctx: Ctx, slide: Slide, { settings }: RenderDoc): void
     const offset = Math.round(size * 0.06)
     let y = H - 110 - (lines.length - 1) * lineHeight
     for (const line of lines) {
-      hardText(ctx, line, 80, y, offset, settings.shadow)
+      hardText(ctx, line, 80, y, offset, project.accent)
       y += lineHeight
     }
   }
 
-  drawHandle(ctx, settings.handle, 'center', W / 2, 90, 36, 0.9)
+  drawHandle(ctx, project.handle, 'center', W / 2, 90, 36, 0.9)
 }
