@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ASPECTS, MAX_SLIDES } from '../constants'
-import { downloadBlob, projectSlug, renderToBlob, slideFileName, zipSlides } from '../export/files'
+import { downloadBlob, pdfSlides, projectSlug, renderToBlob, slideFileName, zipSlides } from '../export/files'
 import { fontPair } from '../fonts/catalog'
 import { loadFontPair } from '../fonts/loader'
 import {
@@ -313,7 +313,14 @@ export const useProjectStore = defineStore('project', {
       await this.ensureFonts()
       const index = this.indexOf(id)
       const slide = this.project.slides[index]
-      downloadBlob(await renderToBlob(slide, this.doc), slideFileName(slide, index))
+      downloadBlob(await renderToBlob(slide, this.doc), slideFileName(slide, index, this.project.export.format))
+    },
+
+    async downloadPdf() {
+      await this.ensureFonts()
+      const name = `${projectSlug(this.doc)}.pdf`
+      downloadBlob(await pdfSlides(this.doc), name)
+      this.status = `Downloaded ${name}. Upload it to LinkedIn as a document post for a swipeable carousel.`
     },
 
     async downloadAll() {

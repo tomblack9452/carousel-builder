@@ -93,6 +93,7 @@ export function starterProject(): Project {
     logo: defaultLogo(),
     cues: { numbers: false, dots: false, arrow: false },
     caption: '',
+    export: { format: 'jpg', quality: 0.95 },
     slides: [
       createSlide('cover', { title: 'Swipe through\nfor the full story' }),
       ...Array.from({ length: 5 }, () => createSlide('image')),

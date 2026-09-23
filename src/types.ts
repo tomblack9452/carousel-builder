@@ -103,7 +103,14 @@ export interface Project {
   cues: SwipeCues
   /** Post caption, including hashtags. */
   caption: string
+  export: ExportSettings
   slides: Slide[]
+}
+
+export interface ExportSettings {
+  format: 'jpg' | 'png'
+  /** JPEG quality, 0.6 to 1. */
+  quality: number
 }
 
 /** Saved look that new projects start from. */

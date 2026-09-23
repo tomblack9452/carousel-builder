@@ -116,6 +116,10 @@ export function normalizeProject(raw: unknown): Project {
       arrow: isObject(raw.cues) && raw.cues.arrow === true,
     },
     caption: str(raw.caption),
+    export: {
+      format: isObject(raw.export) && raw.export.format === 'png' ? 'png' : 'jpg',
+      quality: num(isObject(raw.export) ? raw.export.quality : undefined, 0.95, 0.6, 1),
+    },
     slides,
   }
 }
