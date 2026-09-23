@@ -14,6 +14,8 @@ export interface SlideTypeInfo {
   body: FieldInfo | null
   /** Images can be left empty without a warning. */
   imagesOptional?: boolean
+  /** Takes a video file instead of an image. */
+  video?: boolean
   /** Shown under the image controls, e.g. to explain an optional image. */
   imageHint?: string
 }
@@ -33,6 +35,14 @@ export const SLIDE_TYPES: Record<SlideType, SlideTypeInfo> = {
     imageSlots: 1,
     title: { label: 'Title', placeholder: 'Title' },
     body: { label: 'Subtitle', placeholder: 'Subtitle' },
+  },
+  video: {
+    label: 'Video',
+    imageSlots: 1,
+    title: { label: 'Title', placeholder: 'Title (optional)' },
+    body: { label: 'Subtitle', placeholder: 'Subtitle (optional)' },
+    video: true,
+    imageHint: 'Exports as an MP4 video (WebM in browsers that can\'t make MP4), up to 60 seconds. Recording runs in real time, so keep this tab open.',
   },
   panorama: {
     label: 'Panorama',

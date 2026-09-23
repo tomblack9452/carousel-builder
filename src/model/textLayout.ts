@@ -20,6 +20,7 @@ const layout = (align: Align, anchor: Anchor, y = snapY(anchor)): TextLayout => 
 export const DEFAULT_TEXT: Record<SlideType, TextLayout> = {
   cover: layout('left', 'bottom'),
   image: layout('left', 'bottom', 0.95),
+  video: layout('left', 'bottom', 0.95),
   panorama: layout('left', 'bottom', 0.95),
   grid2: layout('center', 'bottom'),
   grid3: layout('center', 'bottom'),

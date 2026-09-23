@@ -4,9 +4,18 @@ import { typeStyle } from '../style'
 import { type TextLine, bodyLines, drawTextBlock, headingLines, placement } from '../text'
 
 export function drawImage(ctx: Ctx, slide: Slide, doc: RenderDoc): Rect | null {
+  return drawCaptioned(ctx, slide, doc, 'Drop an image here')
+}
+
+/** Video slides look like image slides; the frame drawn is the video's current one. */
+export function drawVideo(ctx: Ctx, slide: Slide, doc: RenderDoc): Rect | null {
+  return drawCaptioned(ctx, slide, doc, 'Drop a video here')
+}
+
+function drawCaptioned(ctx: Ctx, slide: Slide, doc: RenderDoc, prompt: string): Rect | null {
   const { width: W } = doc
   const ts = typeStyle(doc)
-  drawBackground(ctx, doc, slide, 0, 'Drop an image here')
+  drawBackground(ctx, doc, slide, 0, prompt)
   shadeBehindText(ctx, doc, slide.text.anchor, 0.55, 0.75)
 
   const lines: TextLine[] = []

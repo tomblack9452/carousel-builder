@@ -31,7 +31,7 @@ function hslToHex(h: number, s: number, l: number): string {
  * and deep shades of that hue become the background and overlay.
  * Returns null for images with no real colour (e.g. black and white).
  */
-export function paletteFromImage(img: HTMLImageElement): Palette | null {
+export function paletteFromImage(img: CanvasImageSource): Palette | null {
   const canvas = document.createElement('canvas')
   canvas.width = SAMPLE
   canvas.height = SAMPLE

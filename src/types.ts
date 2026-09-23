@@ -1,7 +1,7 @@
 import type { AspectId } from './constants'
 
 export type SlideType =
-  | 'cover' | 'image' | 'panorama' | 'grid2' | 'grid3' | 'grid4' | 'text' | 'quote' | 'list' | 'compare' | 'cta'
+  | 'cover' | 'image' | 'video' | 'panorama' | 'grid2' | 'grid3' | 'grid4' | 'text' | 'quote' | 'list' | 'compare' | 'cta'
 
 export interface ImageSlot {
   /** Asset id in the asset store, or null when empty. */
@@ -149,10 +149,13 @@ export interface Rect {
   h: number
 }
 
+/** A decoded asset: a still image, or a video (drawn at its current frame). */
+export type Media = HTMLImageElement | HTMLVideoElement
+
 /** Everything a renderer may read. */
 export interface RenderDoc {
   project: Project
-  images: Record<string, HTMLImageElement>
+  images: Record<string, Media>
   width: number
   height: number
 }

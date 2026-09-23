@@ -45,7 +45,7 @@ export async function readProjectFile(file: File): Promise<{ project: Project; a
   const project = normalizeProject(parsed.project)
   const assets: Record<string, Blob> = {}
   for (const [id, url] of Object.entries(parsed.assets ?? {})) {
-    if (isAssetId(id) && typeof url === 'string' && url.startsWith('data:image/')) {
+    if (isAssetId(id) && typeof url === 'string' && /^data:(image|video)\//.test(url)) {
       assets[id] = await (await fetch(url)).blob()
     }
   }

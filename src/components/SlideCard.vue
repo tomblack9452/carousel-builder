@@ -7,7 +7,7 @@ import { slideThumbnailBase64 } from '../export/files'
 import { useAiStore } from '../stores/ai'
 import { SLIDE_TYPE_ORDER, SLIDE_TYPES, type SlideTypeInfo } from '../model/slideTypes'
 import { slotFrames } from '../render'
-import { fitImage } from '../render/geometry'
+import { fitImage, mediaSize } from '../render/geometry'
 import { useAssetStore } from '../stores/assets'
 import { useProjectStore } from '../stores/project'
 import type { Align, Anchor, ImageSlot, Slide, SlideType } from '../types'
@@ -60,12 +60,16 @@ export default defineComponent({
     takesImage(): boolean {
       return this.slots.length > 0
     },
+    mediaWord(): string {
+      return this.info.video ? 'video' : 'image'
+    },
     lowResWarning(): string {
       const frames = slotFrames(this.slide, this.projectStore.doc)
       for (const [i, slot] of this.slots.entries()) {
         const img = slot.asset ? this.assetsStore.images[slot.asset] : undefined
         if (img && fitImage(img, slot.zoom, frames[i].w, frames[i].h).scale > LOW_RES_SCALE) {
-          return `Low resolution (${img.naturalWidth}×${img.naturalHeight}px). It will look soft when posted.`
+          const { width, height } = mediaSize(img)
+          return `Low resolution (${width}×${height}px). It will look soft when posted.`
         }
       }
       return ''
@@ -115,9 +119,10 @@ export default defineComponent({
       if (!this.takesImage) return
       event.preventDefault()
       this.dragOver = false
-      const file = [...(event.dataTransfer?.files ?? [])].find((f) => f.type.startsWith('image/'))
+      const kind = this.info.video ? 'video/' : 'image/'
+      const file = [...(event.dataTransfer?.files ?? [])].find((f) => f.type.startsWith(kind))
       if (!file) {
-        this.projectStore.status = 'That drop had no image file in it. Drag the saved image file from your folder.'
+        this.projectStore.status = `That drop had no ${this.mediaWord} file in it. Drag the saved file from your folder.`
         return
       }
       // Fill the first empty slot, else replace the first.
@@ -254,7 +259,7 @@ export default defineComponent({
     </div>
 
     <template v-if="takesImage">
-      <input ref="file" type="file" accept="image/*" hidden @change="onFileChange">
+      <input ref="file" type="file" :accept="info.video ? 'video/*' : 'image/*'" hidden @change="onFileChange">
       <div v-for="(slot, i) in slots" :key="i" class="row">
         <input
           type="range"
@@ -267,7 +272,7 @@ export default defineComponent({
           @input="onZoom(i, $event)"
         >
         <button class="btn" @click="pickFile(i)">
-          {{ slot.asset ? 'Replace' : 'Add' }} image{{ slots.length > 1 ? ` ${i + 1}` : '' }}
+          {{ slot.asset ? 'Replace' : 'Add' }} {{ mediaWord }}{{ slots.length > 1 ? ` ${i + 1}` : '' }}
         </button>
       </div>
       <p v-if="info.imageHint" class="hint">{{ info.imageHint }}</p>

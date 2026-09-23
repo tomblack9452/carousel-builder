@@ -2,6 +2,7 @@
 import { defineComponent, watchEffect, type PropType, type WatchStopHandle } from 'vue'
 import { mapStores } from 'pinia'
 import { SLIDE_TYPES } from '../model/slideTypes'
+import { slideVideo } from '../export/video'
 import { renderSlide, slotFrames } from '../render'
 import { clamp, contains } from '../render/geometry'
 import { stickerBox } from '../render/stickers'
@@ -64,6 +65,9 @@ export default defineComponent({
       textBox: null as Rect | null,
       overText: false,
       stopRender: null as WatchStopHandle | null,
+      /** Bumped every animation frame while a video plays, to redraw. */
+      frameTick: 0,
+      playing: false,
     }
   },
   computed: {
@@ -81,6 +85,16 @@ export default defineComponent({
     aspectRatio(): string {
       return `${this.projectStore.doc.width} / ${this.projectStore.doc.height}`
     },
+    video(): HTMLVideoElement | null {
+      return slideVideo(this.slide, this.projectStore.doc)
+    },
+  },
+  watch: {
+    // A new or removed video stops any preview that was playing.
+    video(_next: HTMLVideoElement | null, previous: HTMLVideoElement | null) {
+      previous?.pause()
+      this.playing = false
+    },
   },
   mounted() {
     const canvas = this.$refs.canvas as HTMLCanvasElement
@@ -90,6 +104,7 @@ export default defineComponent({
     // project settings, or another slide's image it borrows.
     this.stopRender = watchEffect(() => {
       void this.projectStore.fontsVersion
+      void this.frameTick
       const doc = this.projectStore.doc
       if (canvas.width !== doc.width) canvas.width = doc.width
       if (canvas.height !== doc.height) canvas.height = doc.height
@@ -100,8 +115,26 @@ export default defineComponent({
   },
   unmounted() {
     this.stopRender?.()
+    this.video?.pause()
   },
   methods: {
+    async togglePlay() {
+      const video = this.video
+      if (!video) return
+      if (!video.paused) {
+        video.pause()
+        this.playing = false
+        return
+      }
+      await video.play().catch(() => {})
+      this.playing = !video.paused
+      const tick = () => {
+        this.frameTick++
+        if (!video.paused && this.video === video) requestAnimationFrame(tick)
+        else this.playing = false
+      }
+      requestAnimationFrame(tick)
+    },
     /** Pointer position in slide pixels. */
     toSlide(event: PointerEvent): { x: number; y: number; k: number } {
       const canvas = event.currentTarget as HTMLCanvasElement
@@ -225,19 +258,29 @@ export default defineComponent({
 </script>
 
 <template>
-  <canvas
-    ref="canvas"
-    tabindex="0"
-    :style="{ aspectRatio }"
-    :aria-label="`Slide ${index + 1} preview`"
-    :class="{ interactive, empty, dragging: drag, 'over-text': overText || drag?.mode === 'text' }"
-    @pointerdown="onPointerDown"
-    @pointermove="onPointerMove"
-    @pointerup="stopDrag"
-    @pointercancel="stopDrag"
-    @pointerleave="overText = false"
-    @keydown="onKeydown"
-  />
+  <div class="wrap">
+    <canvas
+      ref="canvas"
+      tabindex="0"
+      :style="{ aspectRatio }"
+      :aria-label="`Slide ${index + 1} preview`"
+      :class="{ interactive, empty, dragging: drag, 'over-text': overText || drag?.mode === 'text' }"
+      @pointerdown="onPointerDown"
+      @pointermove="onPointerMove"
+      @pointerup="stopDrag"
+      @pointercancel="stopDrag"
+      @pointerleave="overText = false"
+      @keydown="onKeydown"
+    />
+    <button
+      v-if="video"
+      class="play"
+      :aria-label="playing ? 'Pause video' : 'Play video'"
+      @click="togglePlay"
+    >
+      {{ playing ? '❚❚' : '▶' }}
+    </button>
+  </div>
 </template>
 
 <style scoped>
@@ -252,4 +295,19 @@ canvas.interactive { cursor: grab; }
 canvas.empty { cursor: pointer; }
 canvas.dragging { cursor: grabbing; }
 canvas.over-text { cursor: move; }
+.wrap { position: relative; }
+.play {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+.play:hover { background: rgba(0, 0, 0, 0.8); }
 </style>

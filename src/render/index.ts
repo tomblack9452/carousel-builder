@@ -1,12 +1,13 @@
 import type { Rect, RenderDoc, Slide, SlideType } from '../types'
 import { drawCues } from './cues'
 import type { Ctx } from './draw'
+import { mediaSize } from './geometry'
 import { drawStickers } from './stickers'
 import { compareFrames, drawCompare } from './slides/compare'
 import { drawCover } from './slides/cover'
 import { drawCta } from './slides/cta'
 import { drawGrid, grid2Frames, grid3Frames, grid4Frames } from './slides/grid'
-import { drawImage } from './slides/image'
+import { drawImage, drawVideo } from './slides/image'
 import { drawList } from './slides/list'
 import { drawPanorama, panoramaFrames } from './slides/panorama'
 import { drawQuote } from './slides/quote'
@@ -23,6 +24,7 @@ export interface SlideRenderer {
 const renderers: Record<SlideType, SlideRenderer> = {
   cover: { draw: drawCover },
   image: { draw: drawImage },
+  video: { draw: drawVideo },
   panorama: { draw: drawPanorama, frames: panoramaFrames },
   grid2: { draw: drawGrid, frames: grid2Frames },
   grid3: { draw: drawGrid, frames: grid3Frames },
@@ -61,7 +63,8 @@ function drawLogo(ctx: Ctx, doc: RenderDoc): void {
   const img = asset ? doc.images[asset] : undefined
   if (!img) return
   const w = doc.width * size
-  const h = w * (img.naturalHeight / img.naturalWidth)
+  const natural = mediaSize(img)
+  const h = w * (natural.height / natural.width)
   const x = position.endsWith('left') ? LOGO_MARGIN : doc.width - LOGO_MARGIN - w
   const y = position.startsWith('top') ? LOGO_MARGIN : doc.height - LOGO_MARGIN - h
   ctx.save()

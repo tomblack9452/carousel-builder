@@ -1,6 +1,6 @@
 import { SUB_FONT } from '../constants'
 import { fontPair, stack } from '../fonts/catalog'
-import type { Adjustments, Anchor, ImageSlot, Rect, RenderDoc, Slide } from '../types'
+import type { Adjustments, Anchor, ImageSlot, Media, Rect, RenderDoc, Slide } from '../types'
 import { fitImage } from './geometry'
 
 export type Ctx = CanvasRenderingContext2D
@@ -26,7 +26,7 @@ export function isLight(hex: string): boolean {
   return 0.299 * r + 0.587 * g + 0.114 * b > 160
 }
 
-export function slotImage(doc: RenderDoc, slot: ImageSlot | undefined): HTMLImageElement | null {
+export function slotImage(doc: RenderDoc, slot: ImageSlot | undefined): Media | null {
   return slot?.asset ? doc.images[slot.asset] ?? null : null
 }
 
@@ -37,7 +37,7 @@ const COOL = '#3c8cff'
  * Draw an image cover-fitted, zoomed and panned inside `frame`, clipped to it,
  * with the slide's adjustments. Any filter already set on ctx (e.g. a blur) is kept.
  */
-export function drawSlot(ctx: Ctx, img: HTMLImageElement, slot: ImageSlot, frame: Rect, adjust?: Adjustments): void {
+export function drawSlot(ctx: Ctx, img: Media, slot: ImageSlot, frame: Rect, adjust?: Adjustments): void {
   const { width, height, marginX, marginY } = fitImage(img, slot.zoom, frame.w, frame.h)
   ctx.save()
   ctx.beginPath()

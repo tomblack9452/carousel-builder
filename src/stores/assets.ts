@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { markRaw } from 'vue'
 import { uid } from '../model/factory'
 import { db } from '../persist/db'
+import type { Media } from '../types'
 
 /** Original file data per asset, kept for saving. Not reactive. */
 const blobs = new Map<string, Blob>()
@@ -10,7 +11,11 @@ export function assetBlob(id: string): Blob | undefined {
   return blobs.get(id)
 }
 
-function decode(blob: Blob): Promise<HTMLImageElement> {
+export function isVideo(blob: Blob): boolean {
+  return blob.type.startsWith('video/')
+}
+
+function decodeImage(blob: Blob): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(blob)
     const img = new Image()
@@ -23,17 +28,39 @@ function decode(blob: Blob): Promise<HTMLImageElement> {
   })
 }
 
+/** A muted, looping video element with its first frame ready to draw. */
+function decodeVideo(blob: Blob): Promise<HTMLVideoElement> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(blob)
+    const video = document.createElement('video')
+    video.muted = true
+    video.loop = true
+    video.playsInline = true
+    video.preload = 'auto'
+    video.onloadeddata = () => resolve(video)
+    video.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error('Could not decode video'))
+    }
+    video.src = url
+  })
+}
+
+function decode(blob: Blob): Promise<Media> {
+  return isVideo(blob) ? decodeVideo(blob) : decodeImage(blob)
+}
+
 /**
- * Decoded images by id. Assets are immutable: replacing a slide's image adds
- * a new asset rather than changing an old one, so undo can point back to it.
+ * Decoded images and videos by id. Assets are immutable: replacing a slide's
+ * image adds a new asset rather than changing an old one, so undo can point back to it.
  */
 export const useAssetStore = defineStore('assets', {
   state: () => ({
-    images: {} as Record<string, HTMLImageElement>,
+    images: {} as Record<string, Media>,
   }),
 
   actions: {
-    /** Decode and register an image. Rejects if the blob isn't a readable image. */
+    /** Decode and register an image or video. Rejects if the blob can't be read. */
     async add(blob: Blob, id: string = uid(), persist = true): Promise<string> {
       const img = await decode(blob)
       blobs.set(id, blob)

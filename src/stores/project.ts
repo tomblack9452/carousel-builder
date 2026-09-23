@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ASPECTS, MAX_SLIDES } from '../constants'
 import { downloadBlob, pdfSlides, projectSlug, renderToBlob, slideFileName, zipSlides } from '../export/files'
+import { recordSlide, slideVideo } from '../export/video'
 import { fontPair } from '../fonts/catalog'
 import { loadFontPair } from '../fonts/loader'
 import {
@@ -21,7 +22,7 @@ import { createSticker } from '../model/stickers'
 import type {
   Adjustments, Align, Anchor, BrandKit, ImageSlot, Rect, RenderDoc, Slide, SlideType, Sticker, StickerKind,
 } from '../types'
-import { assetBlob, useAssetStore } from './assets'
+import { assetBlob, isVideo, useAssetStore } from './assets'
 
 const SAVE_KEY = 'project'
 const SAVE_DELAY = 400
@@ -195,13 +196,23 @@ export const useProjectStore = defineStore('project', {
       return slide
     },
 
+    /** Put an image (or, on a video slide, a video) into a slot. */
     async setImage(slideId: string, slotIndex: number, file: File) {
+      const wantsVideo = !!SLIDE_TYPES[this.slide(slideId).type].video
+      if (isVideo(file) !== wantsVideo) {
+        this.status = wantsVideo
+          ? `${file.name} isn't a video. Video slides take MP4, MOV or WebM files.`
+          : `${file.name} is a video. Change the slide type to Video to use it.`
+        return
+      }
       try {
         const asset = await useAssetStore().add(file)
         Object.assign(this.slide(slideId).images[slotIndex], { asset, zoom: 1, px: 0, py: 0 })
         this.linkSlot(slideId, slotIndex)
       } catch {
-        this.status = `${file.name} couldn't be read as an image. Save it as JPG or PNG and try again.`
+        this.status = wantsVideo
+          ? `${file.name} couldn't be played in this browser. Try an MP4 file.`
+          : `${file.name} couldn't be read as an image. Save it as JPG or PNG and try again.`
       }
     },
 
@@ -386,6 +397,17 @@ export const useProjectStore = defineStore('project', {
       await this.ensureFonts()
       const index = this.indexOf(id)
       const slide = this.project.slides[index]
+      if (slideVideo(slide, this.doc)) {
+        this.status = `Recording slide ${index + 1}… keep this tab open until it finishes.`
+        try {
+          const { blob, ext } = await recordSlide(slide, this.doc)
+          downloadBlob(blob, slideFileName(slide, index, ext))
+          this.status = `Downloaded slide ${index + 1} as ${ext.toUpperCase()}.`
+        } catch (err) {
+          this.status = err instanceof Error ? err.message : "The video couldn't be recorded."
+        }
+        return
+      }
       downloadBlob(await renderToBlob(slide, this.doc), slideFileName(slide, index, this.project.export.format))
     },
 
@@ -401,8 +423,15 @@ export const useProjectStore = defineStore('project', {
       const name = `${projectSlug(this.doc)}.zip`
       if (missing) this.status = `${missing} slide${missing > 1 ? 's have' : ' has'} no image yet. Downloading anyway.`
       await this.ensureFonts()
-      downloadBlob(await zipSlides(this.doc), name)
-      if (!missing) this.status = `Downloaded ${name} with all ${this.project.slides.length} slides.`
+      try {
+        downloadBlob(await zipSlides(this.doc, (message) => { this.status = message }), name)
+      } catch (err) {
+        this.status = err instanceof Error ? err.message : "The slides couldn't be exported."
+        return
+      }
+      this.status = missing
+        ? `Downloaded ${name}. ${missing} slide${missing > 1 ? 's were' : ' was'} missing an image.`
+        : `Downloaded ${name} with all ${this.project.slides.length} slides.`
     },
   },
 })

@@ -21,6 +21,7 @@ export function neutralAdjustments(): Adjustments {
 const SAMPLE_CONTENT: Record<SlideType, Pick<Slide, 'title' | 'body'>> = {
   cover: { title: 'Your title\ngoes here', body: '' },
   image: { title: '', body: '' },
+  video: { title: '', body: '' },
   panorama: { title: '', body: '' },
   grid2: { title: '', body: '' },
   grid3: { title: '', body: '' },

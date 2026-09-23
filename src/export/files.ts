@@ -2,12 +2,13 @@ import JSZip from 'jszip'
 import { renderSlide } from '../render'
 import type { ExportSettings, RenderDoc, Slide } from '../types'
 import { buildPdf } from './pdf'
+import { type Recording, recordSlide, slideVideo } from './video'
 
 export function slug(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40)
 }
 
-export function slideFileName(slide: Slide, index: number, format: ExportSettings['format'] = 'jpg'): string {
+export function slideFileName(slide: Slide, index: number, format: ExportSettings['format'] | Recording['ext'] = 'jpg'): string {
   const number = String(index + 1).padStart(2, '0')
   const label = slide.type === 'image' ? slug(slide.title) || 'slide' : slide.type
   return `${number}-${label}.${format}`
@@ -33,10 +34,17 @@ export function renderToBlob(slide: Slide, doc: RenderDoc, settings: ExportSetti
   })
 }
 
-export async function zipSlides(doc: RenderDoc): Promise<Blob> {
+/** Every slide, with video slides recorded to video files. `onProgress` hears about slow steps. */
+export async function zipSlides(doc: RenderDoc, onProgress: (message: string) => void = () => {}): Promise<Blob> {
   const zip = new JSZip()
   for (const [index, slide] of doc.project.slides.entries()) {
-    zip.file(slideFileName(slide, index, doc.project.export.format), await renderToBlob(slide, doc))
+    if (slideVideo(slide, doc)) {
+      onProgress(`Recording the video on slide ${index + 1}…`)
+      const { blob, ext } = await recordSlide(slide, doc)
+      zip.file(slideFileName(slide, index, ext), blob)
+    } else {
+      zip.file(slideFileName(slide, index, doc.project.export.format), await renderToBlob(slide, doc))
+    }
   }
   const caption = doc.project.caption.trim()
   if (caption) zip.file('caption.txt', caption)

@@ -1,4 +1,4 @@
-import type { Rect } from '../types'
+import type { Media, Rect } from '../types'
 
 export interface ImageFit {
   scale: number
@@ -9,11 +9,19 @@ export interface ImageFit {
   marginY: number
 }
 
+/** Pixel size of an image or video. */
+export function mediaSize(media: Media): { width: number; height: number } {
+  return media instanceof HTMLVideoElement
+    ? { width: media.videoWidth || 1, height: media.videoHeight || 1 }
+    : { width: media.naturalWidth || 1, height: media.naturalHeight || 1 }
+}
+
 /** Cover-fit an image to a frame, then apply zoom. */
-export function fitImage(img: HTMLImageElement, zoom: number, frameW: number, frameH: number): ImageFit {
-  const scale = Math.max(frameW / img.naturalWidth, frameH / img.naturalHeight) * zoom
-  const width = img.naturalWidth * scale
-  const height = img.naturalHeight * scale
+export function fitImage(media: Media, zoom: number, frameW: number, frameH: number): ImageFit {
+  const { width: w, height: h } = mediaSize(media)
+  const scale = Math.max(frameW / w, frameH / h) * zoom
+  const width = w * scale
+  const height = h * scale
   return { scale, width, height, marginX: (width - frameW) / 2, marginY: (height - frameH) / 2 }
 }
 
