@@ -4,11 +4,12 @@ import { mapStores } from 'pinia'
 import { ASPECTS } from '../../constants'
 import { useBrandStore } from '../../stores/brand'
 import { useProjectStore } from '../../stores/project'
+import ImportTextDialog from '../ImportTextDialog.vue'
 import SidebarSection from './SidebarSection.vue'
 
 export default defineComponent({
   name: 'ProjectPanel',
-  components: { SidebarSection },
+  components: { ImportTextDialog, SidebarSection },
   data() {
     return { ASPECTS }
   },
@@ -27,6 +28,9 @@ export default defineComponent({
       if (window.confirm('Start a new project? Your current slides will be replaced.')) {
         this.projectStore.newProject(this.brandStore.kit)
       }
+    },
+    openImport() {
+      (this.$refs.importDialog as InstanceType<typeof ImportTextDialog>).open()
     },
     openPicker() {
       (this.$refs.file as HTMLInputElement).click()
@@ -50,6 +54,8 @@ export default defineComponent({
     </div>
     <input ref="file" type="file" accept=".json,application/json" hidden @change="onFile">
     <p class="hint">{{ saveNote }}</p>
+    <button class="btn wide" @click="openImport">Import text from a spreadsheet</button>
+    <ImportTextDialog ref="importDialog" />
 
     <label for="aspect">Slide size</label>
     <select id="aspect" v-model="projectStore.project.aspect">
@@ -60,4 +66,5 @@ export default defineComponent({
 
 <style scoped>
 select { width: 100%; }
+.wide { width: 100%; margin-top: 4px; }
 </style>

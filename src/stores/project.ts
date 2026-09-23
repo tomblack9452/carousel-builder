@@ -6,6 +6,7 @@ import { loadFontPair } from '../fonts/loader'
 import {
   blankProject, changeSlideType, cloneSlide, createSampleSlide, createSlide, neutralAdjustments, starterProject,
 } from '../model/factory'
+import type { TextRow } from '../model/csv'
 import { normalizeProject, projectAssetIds } from '../model/normalize'
 import { panoramaRun, syncPanoramas } from '../model/panorama'
 import { SLIDE_TYPES } from '../model/slideTypes'
@@ -197,6 +198,33 @@ export const useProjectStore = defineStore('project', {
       const extra = images.length > used.length ? ` Only the first ${used.length} fit (${MAX_SLIDES} slides max).` : ''
       this.status = `Loaded ${used.length} image${used.length === 1 ? '' : 's'}.${extra}`
       await Promise.all(loads)
+    },
+
+    /**
+     * Put imported rows of text onto slides. 'fill' replaces text on the
+     * content slides (everything but cover and call to action) in order and
+     * adds slides for leftover rows; 'add' makes a new slide per row.
+     */
+    importText(rows: TextRow[], mode: 'fill' | 'add') {
+      const targets = mode === 'fill' ? this.project.slides.filter((s) => s.type !== 'cover' && s.type !== 'cta') : []
+      let added = 0
+      let skipped = 0
+      for (const [i, row] of rows.entries()) {
+        let slide = targets[i]
+        if (!slide) {
+          if (!this.canAdd) { skipped++; continue }
+          slide = this.insertSlide(createSlide(row.type ?? 'image'), this.endOfContent)
+          added++
+        } else if (row.type && row.type !== slide.type) {
+          changeSlideType(slide, row.type)
+        }
+        Object.assign(slide, { title: row.title, body: row.body })
+      }
+      syncPanoramas(this.project.slides)
+      const parts = [`Imported ${rows.length - skipped} row${rows.length - skipped === 1 ? '' : 's'}`]
+      if (added) parts.push(`added ${added} slide${added === 1 ? '' : 's'}`)
+      if (skipped) parts.push(`${skipped} didn't fit (${MAX_SLIDES} slides max)`)
+      this.status = parts.join(', ') + '.'
     },
 
     /** Insert at `index` (clamped). Returns the inserted slide. */
