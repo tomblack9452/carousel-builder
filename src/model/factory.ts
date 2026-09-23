@@ -92,6 +92,7 @@ export function starterProject(): Project {
     theme: defaultTheme(),
     logo: defaultLogo(),
     cues: { numbers: false, dots: false, arrow: false },
+    caption: '',
     slides: [
       createSlide('cover', { title: 'Swipe through\nfor the full story' }),
       ...Array.from({ length: 5 }, () => createSlide('image')),

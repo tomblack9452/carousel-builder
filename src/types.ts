@@ -101,6 +101,8 @@ export interface Project {
   theme: Theme
   logo: Logo
   cues: SwipeCues
+  /** Post caption, including hashtags. */
+  caption: string
   slides: Slide[]
 }
 

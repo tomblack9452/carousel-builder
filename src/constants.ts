@@ -18,5 +18,9 @@ export const JPEG_QUALITY = 0.95
 /** Instagram's carousel limit. */
 export const MAX_SLIDES = 20
 
+/** Instagram caption limits. */
+export const CAPTION_MAX = 2200
+export const HASHTAG_MAX = 5
+
 /** Drag-and-drop type for reordering slides (distinguishes from file drops). */
 export const SLIDE_DRAG_TYPE = 'application/x-carousel-slide'

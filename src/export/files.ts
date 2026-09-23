@@ -37,6 +37,8 @@ export async function zipSlides(doc: RenderDoc): Promise<Blob> {
   for (const [index, slide] of doc.project.slides.entries()) {
     zip.file(slideFileName(slide, index), await renderToBlob(slide, doc))
   }
+  const caption = doc.project.caption.trim()
+  if (caption) zip.file('caption.txt', caption)
   return zip.generateAsync({ type: 'blob' })
 }
 

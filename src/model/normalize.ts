@@ -115,6 +115,7 @@ export function normalizeProject(raw: unknown): Project {
       dots: isObject(raw.cues) && raw.cues.dots === true,
       arrow: isObject(raw.cues) && raw.cues.arrow === true,
     },
+    caption: str(raw.caption),
     slides,
   }
 }
