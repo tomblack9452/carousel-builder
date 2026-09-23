@@ -37,18 +37,21 @@ export function renderToBlob(slide: Slide, doc: RenderDoc, settings: ExportSetti
 /** Every slide, with video slides recorded to video files. `onProgress` hears about slow steps. */
 export async function zipSlides(doc: RenderDoc, onProgress: (message: string) => void = () => {}): Promise<Blob> {
   const zip = new JSZip()
+  const names: string[] = []
   for (const [index, slide] of doc.project.slides.entries()) {
     if (slideVideo(slide, doc)) {
       onProgress(`Recording the video on slide ${index + 1}…`)
       const { blob, ext } = await recordSlide(slide, doc)
-      zip.file(slideFileName(slide, index, ext), blob)
+      names.push(slideFileName(slide, index, ext))
+      zip.file(names[index], blob)
     } else {
-      zip.file(slideFileName(slide, index, doc.project.export.format), await renderToBlob(slide, doc))
+      names.push(slideFileName(slide, index, doc.project.export.format))
+      zip.file(names[index], await renderToBlob(slide, doc))
     }
   }
   const caption = doc.project.caption.trim()
   if (caption) zip.file('caption.txt', caption)
-  const alt = altTextList(doc)
+  const alt = altTextList(doc, names)
   if (alt) zip.file('alt-text.txt', alt)
   return zip.generateAsync({ type: 'blob' })
 }
@@ -68,10 +71,13 @@ export function slideThumbnailBase64(slide: Slide, doc: RenderDoc, width = 768):
   return small.toDataURL('image/jpeg', 0.85).split(',')[1]
 }
 
-/** "01-cover.jpg: description" per slide that has alt text, for pasting into Instagram. */
-export function altTextList(doc: RenderDoc): string {
+/**
+ * "01-cover.jpg: description" per slide that has alt text, for pasting into Instagram.
+ * `names` are the exported file names, so video slides show their real extension.
+ */
+export function altTextList(doc: RenderDoc, names: string[]): string {
   return doc.project.slides
-    .map((slide, i) => (slide.alt.trim() ? `${slideFileName(slide, i, doc.project.export.format)}: ${slide.alt.trim()}` : ''))
+    .map((slide, i) => (slide.alt.trim() ? `${names[i]}: ${slide.alt.trim()}` : ''))
     .filter(Boolean)
     .join('\n')
 }
