@@ -7,10 +7,11 @@ import CaptionPanel from './sidebar/CaptionPanel.vue'
 import ExportPanel from './sidebar/ExportPanel.vue'
 import ProjectPanel from './sidebar/ProjectPanel.vue'
 import StylePanel from './sidebar/StylePanel.vue'
+import TemplatesPanel from './sidebar/TemplatesPanel.vue'
 
 export default defineComponent({
   name: 'AppSidebar',
-  components: { BrandPanel, CaptionPanel, ExportPanel, ProjectPanel, StylePanel },
+  components: { BrandPanel, CaptionPanel, ExportPanel, ProjectPanel, StylePanel, TemplatesPanel },
   computed: {
     ...mapStores(useProjectStore),
   },
@@ -43,6 +44,7 @@ export default defineComponent({
     </p>
 
     <ProjectPanel />
+    <TemplatesPanel />
     <StylePanel />
     <BrandPanel />
     <CaptionPanel />

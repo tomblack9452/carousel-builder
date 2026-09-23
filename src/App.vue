@@ -4,6 +4,7 @@ import { mapStores } from 'pinia'
 import { useBrandStore } from './stores/brand'
 import { useHistoryStore } from './stores/history'
 import { useProjectStore } from './stores/project'
+import { useTemplateStore } from './stores/templates'
 import AppSidebar from './components/AppSidebar.vue'
 import IconButton from './components/IconButton.vue'
 import PhonePreview from './components/PhonePreview.vue'
@@ -19,9 +20,10 @@ export default defineComponent({
   name: 'App',
   components: { AppSidebar, IconButton, PhonePreview, SlideGrid },
   computed: {
-    ...mapStores(useProjectStore, useHistoryStore, useBrandStore),
+    ...mapStores(useProjectStore, useHistoryStore, useBrandStore, useTemplateStore),
   },
   mounted() {
+    this.templatesStore.load()
     this.brandStore.load()
       .then(() => this.projectStore.init(this.brandStore.assetIds))
       .then(() => this.historyStore.start())
