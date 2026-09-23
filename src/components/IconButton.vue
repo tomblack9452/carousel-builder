@@ -7,6 +7,8 @@ const ICONS = {
   right: 'M9 6l6 6-6 6',
   copy: 'M8 8h11v11H8zM5 16V5h11',
   trash: 'M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3',
+  undo: 'M9 14L4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3',
+  redo: 'M15 14l5-5-5-5M20 9H10a6 6 0 0 0 0 12h3',
 } as const
 
 export type IconName = keyof typeof ICONS
